@@ -1,0 +1,2599 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Simblokken</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700&family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Indeling: links de blokkenwerkruimte, rechts het speelveld met code, grafiek en logboek.
+   Op een smal scherm staan speelveld, blokken en tabbladen onder elkaar.
+   De interface blijft neutraal, de kleur komt van de blokken zelf. */
+:root {
+  --bg: #eceff5;
+  --surface: #ffffff;
+  --surface-2: #f5f7fb;
+  --line: #d8deea;
+  --fg: #1b2231;
+  --muted: #5a667d;
+  --accent: #2c64e3;
+  --accent-fg: #ffffff;
+  --go: #178a58;
+  --go-fg: #ffffff;
+  --bad: #b83232;
+  --bad-bg: #fdecec;
+  --shadow: 0 1px 2px rgba(20, 30, 55, 0.06), 0 6px 20px rgba(20, 30, 55, 0.06);
+  --code-bg: #f5f7fb;
+  --tk-c: #6d7a92;
+  --tk-s: #a8441a;
+  --tk-k: #7a3fd1;
+  --tk-n: #1b7a52;
+  --tk-e: #1f58c9;
+  --font-ui: "Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Bricolage Grotesque", "Figtree", system-ui, sans-serif;
+  --font-code: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e121a;
+    --surface: #161b27;
+    --surface-2: #1b2231;
+    --line: #2a3347;
+    --fg: #e6ebf6;
+    --muted: #9aa6bd;
+    --accent: #7aa2ff;
+    --accent-fg: #0e1420;
+    --go: #2fbf82;
+    --go-fg: #07140e;
+    --bad: #ff8585;
+    --bad-bg: #3a1c1f;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 6px 20px rgba(0, 0, 0, 0.3);
+    --code-bg: #121722;
+    --tk-c: #7f8ba3;
+    --tk-s: #f0a078;
+    --tk-k: #b99aff;
+    --tk-n: #5fd3a0;
+    --tk-e: #86aeff;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e121a;
+  --surface: #161b27;
+  --surface-2: #1b2231;
+  --line: #2a3347;
+  --fg: #e6ebf6;
+  --muted: #9aa6bd;
+  --accent: #7aa2ff;
+  --accent-fg: #0e1420;
+  --go: #2fbf82;
+  --go-fg: #07140e;
+  --bad: #ff8585;
+  --bad-bg: #3a1c1f;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 6px 20px rgba(0, 0, 0, 0.3);
+  --code-bg: #121722;
+  --tk-c: #7f8ba3;
+  --tk-s: #f0a078;
+  --tk-k: #b99aff;
+  --tk-n: #5fd3a0;
+  --tk-e: #86aeff;
+  color-scheme: dark;
+}
+
+[hidden] { display: none !important; }
+html, body { height: 100%; }
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-ui);
+  font-size: 14px;
+  line-height: 1.45;
+}
+*, *::before, *::after { box-sizing: border-box; }
+button, select, input, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.app {
+  height: 100%;
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  gap: 10px;
+  padding-inline: 16px;
+  padding-block: 12px;
+  min-width: 0;
+}
+
+/* Bovenbalk */
+.bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; }
+.brand { display: flex; align-items: center; gap: 10px; margin-right: 4px; }
+.brand svg { width: 30px; height: 30px; flex: none; }
+.brand h1 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 22px;
+  letter-spacing: -0.01em;
+  line-height: 1;
+}
+.controls { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.spacer { flex: 1 1 0; min-width: 0; }
+.picker { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.picker label { color: var(--muted); font-weight: 600; font-size: 13px; }
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+  min-height: 38px; padding: 0 14px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 9px;
+  font-weight: 600; cursor: pointer;
+}
+.btn svg { width: 16px; height: 16px; flex: none; fill: currentColor; }
+.btn:hover { border-color: var(--muted); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); }
+.btn.go { background: var(--go); border-color: var(--go); color: var(--go-fg); min-width: 108px; }
+.btn.go[data-state="running"] { background: var(--surface); border-color: var(--line); color: var(--fg); }
+.btn.go[data-state="running"]:hover { border-color: var(--muted); }
+.select {
+  min-height: 38px; padding: 0 34px 0 12px; max-width: 100%;
+  background-color: var(--surface); border: 1px solid var(--line); border-radius: 9px;
+  font-weight: 600; cursor: pointer;
+  appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+  background-position: calc(100% - 17px) 17px, calc(100% - 12px) 17px;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+}
+.select:hover { border-color: var(--muted); }
+.hint-line { margin: 0; color: var(--muted); font-size: 13px; min-height: 1.45em; }
+
+/* Indeling */
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 440px);
+  gap: 14px;
+  min-height: 0;
+}
+.workspace {
+  position: relative; min-width: 0; min-height: 320px;
+  border: 1px solid var(--line); border-radius: 14px; overflow: hidden;
+  background: var(--surface-2); box-shadow: var(--shadow);
+}
+#blocks { position: absolute; inset: 0; }
+.ws-tools {
+  position: absolute; right: 22px; bottom: 22px; z-index: 30;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.ws-tools .group { display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--surface); box-shadow: var(--shadow); }
+.ws-tools button {
+  width: 36px; height: 36px; display: grid; place-items: center; padding: 0;
+  background: transparent; border: 0; cursor: pointer; color: var(--fg);
+}
+.ws-tools button + button { border-top: 1px solid var(--line); }
+.ws-tools button:hover { background: var(--surface-2); }
+.ws-tools svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+.side { display: flex; flex-direction: column; gap: 14px; min-width: 0; min-height: 0; overflow: auto; padding-bottom: 2px; }
+.card {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 14px;
+  box-shadow: var(--shadow); min-width: 0;
+}
+.stage-card { padding: 10px; display: flex; flex-direction: column; gap: 10px; flex: none; }
+.stage-wrap { position: relative; border-radius: 9px; overflow: hidden; line-height: 0; }
+.stage-wrap.focused { outline: 2px solid var(--accent); outline-offset: 2px; }
+#stage { display: block; width: 100%; max-width: 100%; aspect-ratio: 4 / 3; height: auto; touch-action: none; outline: none; cursor: crosshair; background: #101624; }
+.stage-hint {
+  position: absolute; left: 8px; bottom: 8px; line-height: 1.3;
+  padding: 3px 9px; border-radius: 99px; font-size: 12px; font-weight: 600;
+  background: rgba(10, 14, 24, 0.72); color: #e6ebf6; pointer-events: none;
+}
+.stage-wrap.focused .stage-hint { display: none; }
+.status { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; min-width: 0; }
+.chip {
+  display: inline-flex; align-items: center; gap: 6px; min-height: 26px; padding: 0 10px;
+  border-radius: 99px; font-size: 12.5px; font-weight: 700;
+  background: var(--surface-2); border: 1px solid var(--line); color: var(--muted);
+}
+.chip[data-tone="good"] { color: var(--go); border-color: color-mix(in srgb, var(--go) 40%, var(--line)); background: color-mix(in srgb, var(--go) 12%, var(--surface)); }
+.chip[data-tone="bad"] { color: var(--bad); border-color: color-mix(in srgb, var(--bad) 45%, var(--line)); background: var(--bad-bg); }
+.chip.note { color: var(--fg); }
+.stat { font-variant-numeric: tabular-nums; color: var(--muted); font-size: 13px; }
+.stat b { color: var(--fg); font-weight: 700; }
+.speed { margin-left: auto; display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); font-weight: 600; }
+.speed .select { min-height: 30px; font-size: 13px; background-position: calc(100% - 15px) 12px, calc(100% - 10px) 12px; padding-right: 28px; }
+.error {
+  margin: 0; padding: 9px 12px; border-radius: 9px; font-size: 13px; font-weight: 500;
+  background: var(--bad-bg); color: var(--bad); border: 1px solid color-mix(in srgb, var(--bad) 40%, var(--line));
+}
+
+.panel { display: flex; flex-direction: column; min-height: 260px; flex: 1 1 auto; overflow: hidden; }
+.tablist { display: flex; gap: 2px; padding: 6px 8px 0; border-bottom: 1px solid var(--line); }
+.tab {
+  padding: 8px 14px; border: 0; background: transparent; cursor: pointer; font-weight: 600; color: var(--muted);
+  border-bottom: 2px solid transparent; margin-bottom: -1px; border-radius: 6px 6px 0 0;
+}
+.tab:hover { color: var(--fg); }
+.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--accent); }
+.tabpanel { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; gap: 10px; padding: 10px; overflow: auto; }
+.tabpanel[hidden] { display: none; }
+.tabpanel .lead { margin: 0; color: var(--muted); font-size: 13px; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; }
+.row .btn { min-height: 34px; font-size: 13px; }
+.codebox {
+  margin: 0; padding: 12px; flex: 1 1 auto; min-height: 140px; overflow: auto;
+  background: var(--code-bg); border: 1px solid var(--line); border-radius: 9px;
+  font-family: var(--font-code); font-size: 12.5px; line-height: 1.6; tab-size: 2; white-space: pre;
+}
+.tc { color: var(--tk-c); font-style: italic; }
+.ts { color: var(--tk-s); }
+.tk { color: var(--tk-k); }
+.tn { color: var(--tk-n); }
+.te { color: var(--tk-e); font-weight: 500; }
+#graph { display: block; width: 100%; aspect-ratio: 960 / 400; height: auto; border-radius: 9px; border: 1px solid var(--line); }
+.log { flex: 1 1 auto; min-height: 140px; overflow: auto; background: var(--code-bg); border: 1px solid var(--line); border-radius: 9px; padding: 8px 10px; font-family: var(--font-code); font-size: 12.5px; }
+.log-row { display: flex; gap: 12px; padding: 2px 0; min-width: 0; overflow-wrap: anywhere; }
+.log-frame { color: var(--muted); flex: none; font-variant-numeric: tabular-nums; }
+.empty { margin: 0; color: var(--muted); font-family: var(--font-ui); font-size: 13px; }
+
+/* Dialoog en melding */
+#modal { position: fixed; inset: 0; z-index: 200; display: grid; place-items: center; padding: 16px; background: rgba(8, 12, 22, 0.55); }
+#modal[hidden] { display: none; }
+.dialog { width: min(520px, 100%); max-height: 100%; overflow: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 12px; }
+.dialog h2 { margin: 0; font-family: var(--font-display); font-size: 20px; letter-spacing: -0.01em; text-wrap: balance; }
+.dialog p { margin: 0; color: var(--muted); }
+.field { display: flex; flex-direction: column; gap: 5px; }
+.field label { font-weight: 600; font-size: 13px; }
+.field input[type="text"], .field textarea {
+  width: 100%; padding: 9px 11px; border: 1px solid var(--line); border-radius: 9px; background: var(--surface-2);
+}
+.field textarea { font-family: var(--font-code); font-size: 12px; resize: vertical; }
+.field.check { flex-direction: row; align-items: center; gap: 9px; }
+.field.check input { width: 18px; height: 18px; accent-color: var(--accent); }
+.field .hint { font-size: 12.5px; }
+#modal-fields { display: flex; flex-direction: column; gap: 12px; }
+#modal-buttons { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+#toast {
+  position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 300;
+  max-width: calc(100% - 32px); padding: 10px 16px; border-radius: 10px; font-weight: 600; font-size: 13.5px;
+  background: var(--fg); color: var(--bg); box-shadow: var(--shadow); text-align: center;
+}
+#toast[hidden] { display: none; }
+
+/* De blokkenwerkruimte volgt het thema van de pagina. */
+.blocklyToolboxDiv { font-family: var(--font-ui); }
+.blocklyTreeLabel { font-weight: 600; }
+
+/* Smal scherm */
+@media (max-width: 900px) {
+  .app { height: auto; min-height: 100%; display: flex; flex-direction: column; }
+  .layout { display: flex; flex-direction: column; }
+  .side { display: contents; }
+  .stage-card { order: 1; }
+  .workspace { order: 2; height: 74vh; height: 74dvh; min-height: 420px; }
+  .panel { order: 3; min-height: 300px; flex: none; }
+  .spacer { display: none; }
+}
+@media (max-width: 520px) {
+  .btn { padding: 0 11px; }
+  .btn.go { min-width: 96px; }
+  .picker { flex: 1 1 140px; }
+  .picker label { display: none; }
+  .picker .select { flex: 1 1 auto; min-width: 0; }
+}
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+</style>
+
+<div class="app">
+  <header class="bar">
+    <div class="brand">
+      <svg viewBox="0 0 32 32" aria-hidden="true">
+        <rect x="3" y="3" width="17" height="8" rx="3" fill="#4C97FF"/>
+        <rect x="9" y="12" width="20" height="8" rx="3" fill="#9966FF"/>
+        <rect x="3" y="21" width="15" height="8" rx="3" fill="#0FBD8C"/>
+      </svg>
+      <h1>Simblokken</h1>
+    </div>
+    <div class="controls">
+      <button class="btn go" id="btn-play" type="button" data-state="paused">
+        <svg viewBox="0 0 16 16" aria-hidden="true" id="icon-play"><path d="M4 2.5v11l9-5.5z"/></svg>
+        <span id="btn-play-label">Start</span>
+      </button>
+      <button class="btn" id="btn-step" type="button" title="Een stap vooruit">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 2.5v11l7-5.5zM11 2.5h2.2v11H11z"/></svg>
+        Stap
+      </button>
+      <button class="btn" id="btn-reset" type="button" title="Begin opnieuw met de huidige blokken">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2a6 6 0 1 0 5.9 7h-1.7A4.3 4.3 0 1 1 8 3.7c1 0 1.9.4 2.6 1L8.5 6.8H14V1.3l-2.2 2.2A6 6 0 0 0 8 2z"/></svg>
+        Opnieuw
+      </button>
+    </div>
+    <div class="spacer"></div>
+    <div class="picker">
+      <label for="examples">Voorbeeld</label>
+      <select class="select" id="examples"><option value="" disabled>Kies een voorbeeld</option></select>
+    </div>
+    <button class="btn" id="btn-project" type="button">Project</button>
+  </header>
+  <p class="hint-line" id="example-hint"></p>
+
+  <main class="layout">
+    <section class="workspace" aria-label="Blokkenwerkruimte">
+      <div id="blocks"></div>
+      <div class="ws-tools">
+        <div class="group">
+          <button type="button" id="ws-undo" title="Maak ongedaan" aria-label="Maak ongedaan"><svg viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></svg></button>
+          <button type="button" id="ws-redo" title="Doe opnieuw" aria-label="Doe opnieuw"><svg viewBox="0 0 24 24"><path d="m15 14 5-5-5-5"/><path d="M20 9H9a5 5 0 0 0 0 10h3"/></svg></button>
+        </div>
+        <div class="group">
+          <button type="button" id="ws-zoom-in" title="Inzoomen" aria-label="Inzoomen"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
+          <button type="button" id="ws-zoom-out" title="Uitzoomen" aria-label="Uitzoomen"><svg viewBox="0 0 24 24"><path d="M5 12h14"/></svg></button>
+          <button type="button" id="ws-center" title="Alles in beeld" aria-label="Alles in beeld"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 3v4M12 17v4M3 12h4M17 12h4"/></svg></button>
+        </div>
+      </div>
+    </section>
+
+    <aside class="side">
+      <section class="card stage-card" aria-label="Speelveld">
+        <div class="stage-wrap" id="stage-wrap">
+          <canvas id="stage" width="960" height="720" tabindex="0" aria-label="Speelveld van de simulatie"></canvas>
+          <span class="stage-hint">Klik hier om toetsen te gebruiken</span>
+        </div>
+        <div class="status">
+          <span class="chip" id="chip-state" data-tone="idle">Klaar</span>
+          <span class="chip note" id="chip-changed" hidden>Blokken gewijzigd, druk op Opnieuw</span>
+          <span class="stat">stap <b id="stat-step">0</b></span>
+          <span class="stat"><b id="stat-total">0</b> wezens</span>
+          <label class="speed" for="speed">Snelheid
+            <select class="select" id="speed">
+              <option value="15">Half</option>
+              <option value="30" selected>Normaal</option>
+              <option value="60">Dubbel</option>
+              <option value="120">Viervoudig</option>
+            </select>
+          </label>
+        </div>
+        <p class="error" id="error" role="alert" hidden></p>
+      </section>
+
+      <section class="card panel" aria-label="Code, grafiek en logboek">
+        <div class="tablist" role="tablist" aria-label="Uitvoer">
+          <button class="tab" role="tab" id="tab-code" aria-controls="panel-code" aria-selected="true" type="button">Code</button>
+          <button class="tab" role="tab" id="tab-graph" aria-controls="panel-graph" aria-selected="false" tabindex="-1" type="button">Grafiek</button>
+          <button class="tab" role="tab" id="tab-log" aria-controls="panel-log" aria-selected="false" tabindex="-1" type="button">Logboek</button>
+        </div>
+        <div class="tabpanel" role="tabpanel" id="panel-code" aria-labelledby="tab-code">
+          <p class="lead">Dit is de JavaScript die je blokken maken. Het speelveld voert precies deze code uit.</p>
+          <div class="row">
+            <button class="btn" id="btn-copy-js" type="button">Kopieer JavaScript</button>
+            <button class="btn" id="btn-copy-page" type="button">Kopieer als losse pagina</button>
+          </div>
+          <pre class="codebox" id="code" tabindex="0" aria-label="Gemaakte JavaScript"></pre>
+        </div>
+        <div class="tabpanel" role="tabpanel" id="panel-graph" aria-labelledby="tab-graph" hidden>
+          <canvas id="graph" width="960" height="400" role="img" aria-label="Grafiek van waarden uit je simulatie"></canvas>
+          <p class="lead">Gebruik het blok "zet ... in grafiek" onder Uitvoer om een waarde te volgen.</p>
+        </div>
+        <div class="tabpanel" role="tabpanel" id="panel-log" aria-labelledby="tab-log" hidden>
+          <div class="log" id="log" aria-live="off"></div>
+        </div>
+      </section>
+    </aside>
+  </main>
+</div>
+
+<div id="modal" hidden>
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <h2 id="modal-title"></h2>
+    <p id="modal-message" hidden></p>
+    <div id="modal-fields"></div>
+    <div id="modal-buttons"></div>
+  </div>
+</div>
+<div id="toast" role="status" hidden></div>
+
+<script src="https://cdn.jsdelivr.net/npm/blockly@10.4.3/blockly_compressed.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/blockly@10.4.3/blocks_compressed.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/blockly@10.4.3/javascript_compressed.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/blockly@10.4.3/msg/nl.js"></script>
+<script>
+/* Simblokken runtime
+ * De blokken worden vertaald naar gewone JavaScript die deze functies aanroept.
+ * Het speelveld is 480 x 360 eenheden, het midden is (0, 0) en y loopt omhoog.
+ * Dit bestand staat los van de editor, zodat dezelfde code ook in een losse pagina draait.
+ */
+function createSimulation(env) {
+  env = env || {};
+  const W = 480;
+  const H = 360;
+  const MAX_CREATURES = 2000;
+  const PALETTE = ['#4c8bf5', '#f26b3a', '#34c28a', '#c06be0', '#f2c230', '#ef5b8c', '#3cc7d9', '#9bd63f'];
+  const SERIES = ['#4c8bf5', '#f26b3a', '#34c28a', '#c06be0', '#f2c230', '#ef5b8c'];
+  const CELL_COLORS = ['', '#34c28a', '#f2c230', '#f26b3a', '#c06be0', '#4c8bf5', '#ef5b8c', '#3cc7d9'];
+  const STD = { x: 1, y: 1, vx: 1, vy: 1, angle: 1, size: 1, color: 1, energy: 1, age: 1 };
+
+  const canvas = env.canvas || null;
+  const ctx = canvas ? canvas.getContext('2d') : null;
+
+  let kinds, creatures, nextId, handlers, grid, mouse, pressed, frame, series;
+  let logLines, logCount, background, trails, gravity, drag, bounciness, edges;
+  let running = false;
+  let inStep = false;
+  let stepsPerSecond = 30;
+  let errored = null;
+  let warnedCap = false;
+  let rafId = 0;
+  let lastTime = 0;
+  let acc = 0;
+  let dirty = true;
+  let gridCanvas = null;
+  const colorCache = {};
+
+  function resetState() {
+    kinds = {};
+    creatures = [];
+    nextId = 0;
+    handlers = { start: [], frame: [], click: [], key: [] };
+    grid = null;
+    mouse = { x: 0, y: 0, down: false };
+    pressed = {};
+    frame = 0;
+    series = {};
+    logLines = [];
+    logCount = 0;
+    background = '#101624';
+    trails = false;
+    gravity = 0;
+    drag = 0;
+    bounciness = 0.9;
+    edges = 'bounce';
+    errored = null;
+    warnedCap = false;
+    dirty = true;
+  }
+  resetState();
+
+  /* ---------- hulpfuncties ---------- */
+
+  function num(v, fallback) {
+    v = Number(v);
+    return isFinite(v) ? v : (fallback || 0);
+  }
+
+  function ensureKind(name) {
+    name = String(name);
+    if (!kinds[name]) {
+      kinds[name] = {
+        color: PALETTE[Object.keys(kinds).length % PALETTE.length],
+        size: 5,
+        shape: 'circle',
+        physics: false,
+        collide: false,
+        attract: 0
+      };
+    }
+    return kinds[name];
+  }
+
+  function all(kind) {
+    return kind === '*' || kind === '' || kind == null;
+  }
+
+  function list(kind) {
+    const out = [];
+    for (const c of creatures) {
+      if (c.alive && (all(kind) || c.kind === kind)) out.push(c);
+    }
+    return out;
+  }
+
+  function makeCreature(kind, x, y) {
+    kind = String(kind);
+    const k = ensureKind(kind);
+    if (creatures.length >= MAX_CREATURES) {
+      if (!warnedCap) {
+        warnedCap = true;
+        log('Er zijn al ' + MAX_CREATURES + ' wezens. Nieuwe wezens worden niet meer gemaakt.');
+      }
+      return null;
+    }
+    const c = {
+      id: ++nextId, kind: kind, x: num(x), y: num(y), vx: 0, vy: 0,
+      angle: Math.random() * 360, size: k.size, color: k.color,
+      energy: 100, age: 0, alive: true, props: {}
+    };
+    creatures.push(c);
+    dirty = true;
+    return c;
+  }
+
+  function toRGB(str) {
+    str = String(str);
+    if (colorCache[str]) return colorCache[str];
+    let rgb = [128, 128, 128];
+    let m = /^#([0-9a-f]{6})$/i.exec(str);
+    if (m) {
+      const n = parseInt(m[1], 16);
+      rgb = [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+    } else if ((m = /^#([0-9a-f]{3})$/i.exec(str))) {
+      const h = m[1];
+      rgb = [parseInt(h[0] + h[0], 16), parseInt(h[1] + h[1], 16), parseInt(h[2] + h[2], 16)];
+    } else if (typeof document !== 'undefined') {
+      const c = document.createElement('canvas');
+      c.width = c.height = 1;
+      const g = c.getContext('2d');
+      g.fillStyle = str;
+      g.fillRect(0, 0, 1, 1);
+      const d = g.getImageData(0, 0, 1, 1).data;
+      rgb = [d[0], d[1], d[2]];
+    }
+    colorCache[str] = rgb;
+    return rgb;
+  }
+
+  /* ---------- gebeurtenissen ---------- */
+
+  function onStart(fn) { handlers.start.push(fn); }
+  function onFrame(fn) { handlers.frame.push(fn); }
+  function onClick(fn) { handlers.click.push(fn); }
+  function onKey(key, fn) { handlers.key.push({ key: String(key), fn: fn }); }
+
+  /* ---------- soorten en wezens ---------- */
+
+  function defineKind(kind, style) {
+    const k = ensureKind(kind);
+    style = style || {};
+    if (style.color != null) k.color = String(style.color);
+    if (style.size != null) k.size = Math.max(0.5, num(style.size, 5));
+    if (style.shape != null) k.shape = String(style.shape);
+  }
+
+  function spawn(kind, n) {
+    n = Math.max(0, Math.floor(num(n)));
+    for (let i = 0; i < n; i++) {
+      makeCreature(kind, (Math.random() - 0.5) * W * 0.9, (Math.random() - 0.5) * H * 0.9);
+    }
+  }
+
+  function spawnAt(kind, x, y) {
+    return makeCreature(kind, x, y);
+  }
+
+  function cloneCreature(c) {
+    if (!c || !c.alive) return null;
+    const copy = makeCreature(c.kind, c.x, c.y);
+    if (!copy) return null;
+    copy.vx = c.vx;
+    copy.vy = c.vy;
+    copy.angle = Math.random() * 360;
+    copy.size = c.size;
+    copy.color = c.color;
+    copy.energy = c.energy;
+    copy.props = Object.assign({}, c.props);
+    return copy;
+  }
+
+  function removeCreature(c) {
+    if (c) { c.alive = false; dirty = true; }
+  }
+
+  function creaturesOf(kind) {
+    return list(kind);
+  }
+
+  function randomItem(items) {
+    if (!Array.isArray(items) || !items.length) return null;
+    return items[Math.floor(Math.random() * items.length)];
+  }
+
+  function getProp(c, name) {
+    if (!c) return 0;
+    if (STD[name]) return c[name];
+    const v = c.props[name];
+    return v === undefined ? 0 : v;
+  }
+
+  function setProp(c, name, value) {
+    if (!c) return;
+    if (STD[name]) {
+      if (name === 'color') { c.color = String(value); return; }
+      value = Number(value);
+      if (!isFinite(value)) return;
+      c[name] = name === 'size' ? Math.max(0.5, value) : value;
+      return;
+    }
+    c.props[name] = value;
+  }
+
+  function changeProp(c, name, delta) {
+    if (!c) return;
+    setProp(c, name, num(getProp(c, name)) + num(delta));
+  }
+
+  function move(c, steps) {
+    if (!c) return;
+    const a = c.angle * Math.PI / 180;
+    c.x += Math.cos(a) * num(steps);
+    c.y += Math.sin(a) * num(steps);
+  }
+
+  function turn(c, degrees) {
+    if (!c) return;
+    c.angle = (((c.angle + num(degrees)) % 360) + 360) % 360;
+  }
+
+  function lookAt(c, x, y) {
+    if (!c) return;
+    c.angle = (Math.atan2(num(y) - c.y, num(x) - c.x) * 180 / Math.PI + 360) % 360;
+  }
+
+  function lookAtCreature(c, other) {
+    if (c && other) lookAt(c, other.x, other.y);
+  }
+
+  function distance(a, b) {
+    if (!a || !b) return Infinity;
+    return Math.hypot(a.x - b.x, a.y - b.y);
+  }
+
+  function exists(c) {
+    return !!c && c.alive === true;
+  }
+
+  function nearest(c, kind) {
+    if (!c) return null;
+    let best = null;
+    let bestD = Infinity;
+    for (const o of creatures) {
+      if (!o.alive || o === c || !(all(kind) || o.kind === kind)) continue;
+      const dx = o.x - c.x;
+      const dy = o.y - c.y;
+      const d = dx * dx + dy * dy;
+      if (d < bestD) { bestD = d; best = o; }
+    }
+    return best;
+  }
+
+  function touchingCreature(c, kind) {
+    if (!c) return null;
+    for (const o of creatures) {
+      if (!o.alive || o === c || !(all(kind) || o.kind === kind)) continue;
+      const r = c.size + o.size;
+      const dx = o.x - c.x;
+      const dy = o.y - c.y;
+      if (dx * dx + dy * dy < r * r) return o;
+    }
+    return null;
+  }
+
+  function touching(c, kind) {
+    return touchingCreature(c, kind) !== null;
+  }
+
+  function bounce(c) {
+    if (!c) return;
+    const r = c.size;
+    if (c.x - r < -W / 2) { c.x = -W / 2 + r; c.angle = 180 - c.angle; }
+    if (c.x + r > W / 2) { c.x = W / 2 - r; c.angle = 180 - c.angle; }
+    if (c.y - r < -H / 2) { c.y = -H / 2 + r; c.angle = -c.angle; }
+    if (c.y + r > H / 2) { c.y = H / 2 - r; c.angle = -c.angle; }
+    c.angle = ((c.angle % 360) + 360) % 360;
+  }
+
+  function wrapAround(c) {
+    if (!c) return;
+    if (c.x > W / 2) c.x -= W;
+    if (c.x < -W / 2) c.x += W;
+    if (c.y > H / 2) c.y -= H;
+    if (c.y < -H / 2) c.y += H;
+  }
+
+  function count(kind) {
+    return list(kind).length;
+  }
+
+  /* ---------- natuurkunde ---------- */
+
+  function setGravity(g) { gravity = num(g); }
+  function setDrag(d) { drag = Math.min(1, Math.max(0, num(d))); }
+  function setBounce(b) { bounciness = Math.max(0, num(b)); }
+  function setEdges(mode) { edges = String(mode); }
+  function setPhysics(kind, on) { ensureKind(kind).physics = !!on; }
+  function setCollisions(kind, on) { ensureKind(kind).collide = !!on; }
+  function setAttraction(kind, strength) {
+    const k = ensureKind(kind);
+    k.attract = Math.max(0, num(strength));
+    if (k.attract > 0) k.physics = true;
+  }
+
+  function push(c, vx, vy) {
+    if (!c) return;
+    c.vx += num(vx);
+    c.vy += num(vy);
+  }
+
+  function physicsStep() {
+    const names = Object.keys(kinds);
+    let anyPhysics = false;
+    for (const n of names) if (kinds[n].physics) anyPhysics = true;
+    if (!anyPhysics) return;
+
+    for (const n of names) {
+      const k = kinds[n];
+      if (!(k.attract > 0)) continue;
+      const items = list(n);
+      for (let i = 0; i < items.length; i++) {
+        for (let j = i + 1; j < items.length; j++) {
+          const a = items[i];
+          const b = items[j];
+          const dx = b.x - a.x;
+          const dy = b.y - a.y;
+          const d2 = dx * dx + dy * dy + 25;
+          const d = Math.sqrt(d2);
+          const f = k.attract / d2;
+          const ma = a.size * a.size;
+          const mb = b.size * b.size;
+          a.vx += (dx / d) * f * mb;
+          a.vy += (dy / d) * f * mb;
+          b.vx -= (dx / d) * f * ma;
+          b.vy -= (dy / d) * f * ma;
+        }
+      }
+    }
+
+    for (const c of creatures) {
+      if (!c.alive || !kinds[c.kind].physics) continue;
+      c.vy -= gravity;
+      c.vx *= 1 - drag;
+      c.vy *= 1 - drag;
+      c.x += c.vx;
+      c.y += c.vy;
+      const r = c.size;
+      if (edges === 'bounce') {
+        if (c.x - r < -W / 2) { c.x = -W / 2 + r; c.vx = Math.abs(c.vx) * bounciness; }
+        if (c.x + r > W / 2) { c.x = W / 2 - r; c.vx = -Math.abs(c.vx) * bounciness; }
+        if (c.y - r < -H / 2) { c.y = -H / 2 + r; c.vy = Math.abs(c.vy) * bounciness; }
+        if (c.y + r > H / 2) { c.y = H / 2 - r; c.vy = -Math.abs(c.vy) * bounciness; }
+      } else if (edges === 'wrap') {
+        wrapAround(c);
+      }
+    }
+
+    for (const n of names) {
+      if (!kinds[n].collide) continue;
+      const items = list(n);
+      for (let i = 0; i < items.length; i++) {
+        for (let j = i + 1; j < items.length; j++) {
+          const a = items[i];
+          const b = items[j];
+          const dx = b.x - a.x;
+          const dy = b.y - a.y;
+          const min = a.size + b.size;
+          if (Math.abs(dx) > min || Math.abs(dy) > min) continue;
+          const d = Math.hypot(dx, dy);
+          if (d >= min) continue;
+          const nx = d > 0 ? dx / d : 1;
+          const ny = d > 0 ? dy / d : 0;
+          const overlap = min - d;
+          a.x -= nx * overlap / 2;
+          a.y -= ny * overlap / 2;
+          b.x += nx * overlap / 2;
+          b.y += ny * overlap / 2;
+          const rel = (b.vx - a.vx) * nx + (b.vy - a.vy) * ny;
+          if (rel < 0) {
+            const ma = a.size * a.size;
+            const mb = b.size * b.size;
+            const j2 = -(1 + bounciness) * rel / (1 / ma + 1 / mb);
+            a.vx -= (j2 * nx) / ma;
+            a.vy -= (j2 * ny) / ma;
+            b.vx += (j2 * nx) / mb;
+            b.vy += (j2 * ny) / mb;
+          }
+        }
+      }
+    }
+  }
+
+  /* ---------- raster ---------- */
+
+  function createGrid(w, h, fill) {
+    w = Math.min(240, Math.max(2, Math.floor(num(w, 48))));
+    h = Math.min(180, Math.max(2, Math.floor(num(h, 36))));
+    const size = w * h;
+    const cur = new Array(size);
+    for (let i = 0; i < size; i++) cur[i] = num(fill);
+    const coords = new Array(size);
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) coords[y * w + x] = [x, y];
+    }
+    grid = { w: w, h: h, cur: cur, next: null, coords: coords, colors: CELL_COLORS.slice() };
+    gridCanvas = null;
+    dirty = true;
+  }
+
+  function needGrid() {
+    if (!grid) createGrid(48, 36, 0);
+    return grid;
+  }
+
+  function fillGridRandom(percent, value, rest) {
+    const g = needGrid();
+    for (let i = 0; i < g.cur.length; i++) {
+      g.cur[i] = Math.random() * 100 < num(percent) ? num(value) : num(rest);
+    }
+    g.next = null;
+    dirty = true;
+  }
+
+  function idx(g, x, y) {
+    x = ((Math.floor(num(x)) % g.w) + g.w) % g.w;
+    y = ((Math.floor(num(y)) % g.h) + g.h) % g.h;
+    return y * g.w + x;
+  }
+
+  function getCell(x, y) {
+    const g = needGrid();
+    return g.cur[idx(g, x, y)];
+  }
+
+  /* Tijdens een stap worden wijzigingen verzameld en pas aan het einde van de stap
+     zichtbaar. Zo kijkt elke cel naar dezelfde vorige generatie. */
+  function setCell(x, y, value) {
+    const g = needGrid();
+    const i = idx(g, x, y);
+    if (inStep) {
+      if (!g.next) g.next = g.cur.slice();
+      g.next[i] = num(value);
+    } else {
+      g.cur[i] = num(value);
+      if (g.next) g.next[i] = num(value);
+    }
+    dirty = true;
+  }
+
+  function commitGrid() {
+    if (grid && grid.next) {
+      grid.cur = grid.next;
+      grid.next = null;
+    }
+  }
+
+  function cellCoords() {
+    return needGrid().coords;
+  }
+
+  function countNeighbors(x, y, value, around) {
+    const g = needGrid();
+    x = Math.floor(num(x));
+    y = Math.floor(num(y));
+    let n = 0;
+    for (let dy = -1; dy <= 1; dy++) {
+      for (let dx = -1; dx <= 1; dx++) {
+        if (dx === 0 && dy === 0) continue;
+        if (around === 4 && dx !== 0 && dy !== 0) continue;
+        if (g.cur[idx(g, x + dx, y + dy)] === value) n++;
+      }
+    }
+    return n;
+  }
+
+  function countCells(value) {
+    const g = needGrid();
+    let n = 0;
+    for (let i = 0; i < g.cur.length; i++) if (g.cur[i] === value) n++;
+    return n;
+  }
+
+  function setCellColor(value, color) {
+    needGrid().colors[Math.floor(num(value))] = String(color);
+    dirty = true;
+  }
+
+  function gridWidth() { return needGrid().w; }
+  function gridHeight() { return needGrid().h; }
+
+  function mouseCellX() {
+    const g = needGrid();
+    return Math.min(g.w - 1, Math.max(0, Math.floor((mouse.x + W / 2) / W * g.w)));
+  }
+
+  function mouseCellY() {
+    const g = needGrid();
+    return Math.min(g.h - 1, Math.max(0, Math.floor((H / 2 - mouse.y) / H * g.h)));
+  }
+
+  /* ---------- invoer ---------- */
+
+  function mouseX() { return mouse.x; }
+  function mouseY() { return mouse.y; }
+  function mouseDown() { return mouse.down; }
+  function keyDown(key) { return !!pressed[String(key)]; }
+  function frameNumber() { return frame; }
+  function elapsedSeconds() { return frame / stepsPerSecond; }
+
+  function edge(side) {
+    if (side === 'left') return -W / 2;
+    if (side === 'right') return W / 2;
+    if (side === 'top') return H / 2;
+    return -H / 2;
+  }
+
+  /* ---------- uitvoer ---------- */
+
+  function format(v) {
+    if (typeof v === 'number') return String(Math.round(v * 1000) / 1000);
+    if (v && typeof v === 'object' && 'kind' in v && 'alive' in v) {
+      return '[' + v.kind + ' op ' + Math.round(v.x) + ', ' + Math.round(v.y) + ']';
+    }
+    if (v && typeof v === 'object') {
+      try { return JSON.stringify(v); } catch (e) { return String(v); }
+    }
+    return String(v);
+  }
+
+  function log(value) {
+    logLines.push({ frame: frame, text: format(value).slice(0, 300) });
+    logCount++;
+    if (logLines.length > 200) logLines.shift();
+  }
+
+  function plot(name, value) {
+    name = String(name);
+    value = num(value);
+    if (!series[name]) {
+      series[name] = { color: SERIES[Object.keys(series).length % SERIES.length], points: [] };
+    }
+    const pts = series[name].points;
+    const last = pts[pts.length - 1];
+    if (last && last.f === frame) last.v = value;
+    else pts.push({ f: frame, v: value });
+    if (pts.length > 600) pts.shift();
+  }
+
+  function setBackground(color) { background = String(color); dirty = true; }
+  function setTrails(on) { trails = !!on; }
+
+  function stopSim() {
+    running = false;
+    dirty = true;
+  }
+
+  function randomInt(a, b) {
+    a = Math.ceil(num(a));
+    b = Math.floor(num(b));
+    if (a > b) { const t = a; a = b; b = t; }
+    return Math.floor(Math.random() * (b - a + 1)) + a;
+  }
+
+  function hsl(h, l) {
+    const hue = Math.round(((num(h) % 360) + 360) % 360);
+    return 'hsl(' + hue + ', 78%, ' + (l == null ? 55 : Math.min(95, Math.max(5, num(l)))) + '%)';
+  }
+
+  function randomColor() {
+    return hsl(Math.random() * 360);
+  }
+
+  const api = {
+    onStart, onFrame, onClick, onKey,
+    defineKind, spawn, spawnAt, cloneCreature, removeCreature, creaturesOf, randomItem,
+    getProp, setProp, changeProp, move, turn, lookAt, lookAtCreature,
+    nearest, distance, exists, touching, touchingCreature, bounce, wrapAround, count,
+    setGravity, setDrag, setBounce, setEdges, setPhysics, setCollisions, setAttraction, push,
+    createGrid, fillGridRandom, getCell, setCell, cellCoords, countNeighbors, countCells,
+    setCellColor, gridWidth, gridHeight, mouseCellX, mouseCellY,
+    mouseX, mouseY, mouseDown, keyDown, frameNumber, elapsedSeconds, edge,
+    log, plot, setBackground, setTrails, stopSim, randomInt, randomColor, hsl
+  };
+  const apiNames = Object.keys(api);
+
+  /* ---------- uitvoeren ---------- */
+
+  function fail(e) {
+    errored = (e && e.message) ? e.message : String(e);
+    running = false;
+    log('Fout: ' + errored);
+    if (env.onError) env.onError(errored);
+  }
+
+  function safe(fn, a, b) {
+    try { fn(a, b); } catch (e) { fail(e); }
+  }
+
+  function step() {
+    if (errored) return;
+    try {
+      frame++;
+      inStep = true;
+      for (const h of handlers.frame) h();
+      inStep = false;
+      commitGrid();
+      physicsStep();
+      for (const c of creatures) if (c.alive) c.age++;
+      creatures = creatures.filter(function (c) { return c.alive; });
+      dirty = true;
+    } catch (e) {
+      inStep = false;
+      fail(e);
+    }
+  }
+
+  function load(code) {
+    resetState();
+    try {
+      const fn = new Function(apiNames.join(','), code);
+      fn.apply(null, apiNames.map(function (n) { return api[n]; }));
+      for (const h of handlers.start) h();
+    } catch (e) {
+      fail(e);
+    }
+    render();
+  }
+
+  function play() { running = !errored; lastTime = 0; }
+  function pause() { running = false; }
+  function isRunning() { return running; }
+  function setSpeed(n) { stepsPerSecond = Math.min(120, Math.max(1, num(n, 30))); }
+
+  function info() {
+    const counts = {};
+    for (const c of creatures) if (c.alive) counts[c.kind] = (counts[c.kind] || 0) + 1;
+    const plots = {};
+    for (const name of Object.keys(series)) {
+      const pts = series[name].points;
+      plots[name] = pts.length ? pts[pts.length - 1].v : 0;
+    }
+    return {
+      frame: frame, running: running, error: errored, counts: counts, plots: plots,
+      total: creatures.length, logCount: logCount, log: logLines
+    };
+  }
+
+  /* ---------- tekenen ---------- */
+
+  function px(x) { return (x + W / 2) * (canvas.width / W); }
+  function py(y) { return (H / 2 - y) * (canvas.width / W); }
+
+  function render() {
+    if (!ctx) return;
+    const s = canvas.width / W;
+    if (trails) {
+      ctx.globalAlpha = 0.18;
+      ctx.fillStyle = background;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.globalAlpha = 1;
+    } else {
+      ctx.fillStyle = background;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+
+    if (grid) {
+      if (!gridCanvas || gridCanvas.width !== grid.w || gridCanvas.height !== grid.h) {
+        gridCanvas = document.createElement('canvas');
+        gridCanvas.width = grid.w;
+        gridCanvas.height = grid.h;
+      }
+      const gctx = gridCanvas.getContext('2d');
+      const img = gctx.createImageData(grid.w, grid.h);
+      for (let i = 0; i < grid.cur.length; i++) {
+        const v = Math.floor(grid.cur[i]);
+        let col = grid.colors[v];
+        if (col === undefined) col = v > 0 ? CELL_COLORS[(v % (CELL_COLORS.length - 1)) + 1] : '';
+        if (!col) continue;
+        const rgb = toRGB(col);
+        img.data[i * 4] = rgb[0];
+        img.data[i * 4 + 1] = rgb[1];
+        img.data[i * 4 + 2] = rgb[2];
+        img.data[i * 4 + 3] = 255;
+      }
+      gctx.putImageData(img, 0, 0);
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(gridCanvas, 0, 0, canvas.width, canvas.height);
+    }
+
+    for (const c of creatures) {
+      if (!c.alive) continue;
+      const k = kinds[c.kind];
+      const x = px(c.x);
+      const y = py(c.y);
+      const r = Math.max(1, c.size * s);
+      ctx.fillStyle = c.color;
+      ctx.beginPath();
+      if (k.shape === 'square') {
+        ctx.rect(x - r, y - r, r * 2, r * 2);
+      } else if (k.shape === 'arrow') {
+        const a = -c.angle * Math.PI / 180;
+        ctx.moveTo(x + Math.cos(a) * r * 1.7, y + Math.sin(a) * r * 1.7);
+        ctx.lineTo(x + Math.cos(a + 2.5) * r * 1.2, y + Math.sin(a + 2.5) * r * 1.2);
+        ctx.lineTo(x + Math.cos(a - 2.5) * r * 1.2, y + Math.sin(a - 2.5) * r * 1.2);
+        ctx.closePath();
+      } else {
+        ctx.arc(x, y, r, 0, Math.PI * 2);
+      }
+      ctx.fill();
+    }
+    dirty = false;
+    drawGraph();
+  }
+
+  function niceCeil(v) {
+    if (v <= 0) return 1;
+    const p = Math.pow(10, Math.floor(Math.log10(v)));
+    const f = v / p;
+    const n = f <= 1 ? 1 : f <= 2 ? 2 : f <= 5 ? 5 : 10;
+    return n * p;
+  }
+
+  function drawGraph() {
+    const g = env.graph;
+    if (!g) return;
+    const gc = g.getContext('2d');
+    const w = g.width;
+    const h = g.height;
+    const th = env.theme ? env.theme() : { bg: '#fff', fg: '#222', muted: '#777', grid: '#ddd' };
+    gc.fillStyle = th.bg;
+    gc.fillRect(0, 0, w, h);
+    const names = Object.keys(series);
+    gc.font = '22px system-ui, sans-serif';
+    if (!names.length) {
+      gc.fillStyle = th.muted;
+      gc.textAlign = 'center';
+      gc.fillText('Nog geen gegevens. Gebruik het blok "zet in grafiek".', w / 2, h / 2);
+      return;
+    }
+    let max = 1;
+    let fmin = Infinity;
+    for (const n of names) {
+      for (const p of series[n].points) {
+        if (p.v > max) max = p.v;
+        if (p.f < fmin) fmin = p.f;
+      }
+    }
+    const top = niceCeil(max);
+    const fmax = Math.max(frame, fmin + 1);
+    const L = 74;
+    const R = 20;
+    const T = 52;
+    const B = 40;
+    const pw = w - L - R;
+    const ph = h - T - B;
+    gc.textAlign = 'right';
+    gc.lineWidth = 1;
+    for (let i = 0; i <= 2; i++) {
+      const val = top * i / 2;
+      const y = T + ph - (val / top) * ph;
+      gc.strokeStyle = th.grid;
+      gc.beginPath();
+      gc.moveTo(L, y);
+      gc.lineTo(w - R, y);
+      gc.stroke();
+      gc.fillStyle = th.muted;
+      gc.fillText(String(Math.round(val * 10) / 10), L - 10, y + 7);
+    }
+    gc.textAlign = 'left';
+    gc.fillStyle = th.muted;
+    gc.fillText('stap ' + fmin, L, h - 10);
+    gc.textAlign = 'right';
+    gc.fillText('stap ' + fmax, w - R, h - 10);
+    gc.lineWidth = 3;
+    gc.lineJoin = 'round';
+    let lx = L;
+    for (const n of names) {
+      const s = series[n];
+      gc.strokeStyle = s.color;
+      gc.beginPath();
+      s.points.forEach(function (p, i) {
+        const x = L + ((p.f - fmin) / (fmax - fmin)) * pw;
+        const y = T + ph - (p.v / top) * ph;
+        if (i === 0) gc.moveTo(x, y); else gc.lineTo(x, y);
+      });
+      gc.stroke();
+      const lastP = s.points[s.points.length - 1];
+      gc.fillStyle = s.color;
+      gc.fillRect(lx, 16, 18, 18);
+      gc.fillStyle = th.fg;
+      gc.textAlign = 'left';
+      const label = n + ' ' + Math.round(lastP.v * 10) / 10;
+      gc.fillText(label, lx + 26, 32);
+      lx += 26 + gc.measureText(label).width + 28;
+    }
+  }
+
+  /* ---------- tijdlus en invoer ---------- */
+
+  function tick(now) {
+    rafId = requestAnimationFrame(tick);
+    if (!running) { lastTime = now; if (dirty) render(); return; }
+    if (!lastTime) lastTime = now;
+    acc += Math.min(now - lastTime, 250);
+    lastTime = now;
+    const dt = 1000 / stepsPerSecond;
+    let n = 0;
+    while (acc >= dt && n < 4 && running) { step(); acc -= dt; n++; }
+    if (n === 4) acc = 0;
+    if (n > 0 || dirty) render();
+  }
+
+  function keyName(e) {
+    const k = e.key;
+    if (k === ' ') return 'space';
+    if (k === 'ArrowLeft') return 'left';
+    if (k === 'ArrowRight') return 'right';
+    if (k === 'ArrowUp') return 'up';
+    if (k === 'ArrowDown') return 'down';
+    if (k === 'Enter') return 'enter';
+    return k.length === 1 ? k.toLowerCase() : k;
+  }
+
+  function setMouse(e) {
+    const r = canvas.getBoundingClientRect();
+    mouse.x = ((e.clientX - r.left) / r.width) * W - W / 2;
+    mouse.y = H / 2 - ((e.clientY - r.top) / r.height) * H;
+  }
+
+  const listeners = [];
+  function listen(target, type, fn) {
+    target.addEventListener(type, fn);
+    listeners.push([target, type, fn]);
+  }
+
+  if (canvas && typeof requestAnimationFrame === 'function') {
+    listen(canvas, 'pointermove', setMouse);
+    listen(canvas, 'pointerdown', function (e) {
+      setMouse(e);
+      mouse.down = true;
+      try { canvas.focus({ preventScroll: true }); canvas.setPointerCapture(e.pointerId); } catch (err) { /* geen focus */ }
+      for (const h of handlers.click) safe(h);
+    });
+    listen(canvas, 'pointerup', function () { mouse.down = false; });
+    listen(canvas, 'pointercancel', function () { mouse.down = false; });
+    const keyTarget = env.keyTarget || canvas;
+    listen(keyTarget, 'keydown', function (e) {
+      const name = keyName(e);
+      if (['left', 'right', 'up', 'down', 'space'].indexOf(name) >= 0) e.preventDefault();
+      if (e.repeat) return;
+      pressed[name] = true;
+      for (const h of handlers.key) if (h.key === name) safe(h.fn);
+    });
+    listen(keyTarget, 'keyup', function (e) { delete pressed[keyName(e)]; });
+    listen(canvas, 'blur', function () { pressed = {}; });
+    rafId = requestAnimationFrame(tick);
+  }
+
+  function destroy() {
+    if (rafId && typeof cancelAnimationFrame === 'function') cancelAnimationFrame(rafId);
+    for (const l of listeners) l[0].removeEventListener(l[1], l[2]);
+    listeners.length = 0;
+  }
+
+  return {
+    api: api, apiNames: apiNames, load: load, play: play, pause: pause, step: step,
+    render: render, isRunning: isRunning, setSpeed: setSpeed, info: info, destroy: destroy,
+    stage: { width: W, height: H }
+  };
+}
+
+
+/* Simblokken: blokken, JavaScript-generatoren, toolbox en thema's.
+ * registerSimBlocks({ Blockly, javascriptGenerator, Order, apiNames }) zet alles klaar.
+ */
+function registerSimBlocks(ctx) {
+  const Blockly = ctx.Blockly;
+  const gen = ctx.javascriptGenerator;
+  const Order = ctx.Order;
+
+  const COLORS = {
+    events: '#FFBF00',
+    motion: '#4C97FF',
+    creatures: '#9966FF',
+    physics: '#0FBD8C',
+    grid: '#CF63CF',
+    sensing: '#5CB1D6',
+    output: '#6F7E96',
+    control: '#FFAB19',
+    operators: '#59C059',
+    variables: '#FF8C1A',
+    lists: '#FF661A',
+    procedures: '#FF6680'
+  };
+
+  const PROPS = [
+    ['x-positie', 'x'], ['y-positie', 'y'], ['snelheid x', 'vx'], ['snelheid y', 'vy'],
+    ['richting', 'angle'], ['grootte', 'size'], ['kleur', 'color'], ['energie', 'energy'],
+    ['leeftijd', 'age']
+  ];
+  const KEYS = [
+    ['spatie', 'space'], ['pijl links', 'left'], ['pijl rechts', 'right'], ['pijl omhoog', 'up'],
+    ['pijl omlaag', 'down'], ['w', 'w'], ['a', 'a'], ['s', 's'], ['d', 'd'], ['q', 'q'],
+    ['e', 'e'], ['r', 'r'], ['f', 'f'], ['enter', 'enter']
+  ];
+  const ON_OFF = [['aan', 'true'], ['uit', 'false']];
+
+  /* ---------- hulp voor argumenten ---------- */
+  const num = function (name) { return { type: 'input_value', name: name, check: 'Number' }; };
+  const any = function (name) { return { type: 'input_value', name: name }; };
+  const bool = function (name) { return { type: 'input_value', name: name, check: 'Boolean' }; };
+  const dd = function (name, options) { return { type: 'field_dropdown', name: name, options: options }; };
+  const txt = function (name, def) { return { type: 'field_input', name: name, text: def }; };
+
+  function stmt(type, color, message, args, tooltip) {
+    return { type: type, message0: message, args0: args, previousStatement: null, nextStatement: null,
+      colour: color, tooltip: tooltip || '', inputsInline: true };
+  }
+  function value(type, color, message, args, output, tooltip) {
+    return { type: type, message0: message, args0: args, output: output === undefined ? null : output,
+      colour: color, tooltip: tooltip || '', inputsInline: true };
+  }
+  function hat(type, color, message, args, tooltip) {
+    return { type: type, message0: message, args0: args || [], nextStatement: null, style: 'sim_hat',
+      tooltip: tooltip || '', inputsInline: true };
+  }
+
+  const C = COLORS;
+  const defs = [
+    /* Gebeurtenissen */
+    hat('sim_when_start', C.events, 'als de simulatie start', [], 'Deze blokken worden één keer uitgevoerd als je op Start of Opnieuw drukt.'),
+    hat('sim_every_step', C.events, 'bij elke stap', [], 'Deze blokken worden elke stap uitgevoerd, standaard 30 keer per seconde.'),
+    hat('sim_on_click', C.events, 'als er op het speelveld wordt geklikt', [], 'Gebruik "muis x" en "muis y" om te zien waar er is geklikt.'),
+    hat('sim_on_key', C.events, 'als toets %1 wordt ingedrukt', [dd('KEY', KEYS)], 'Klik eerst op het speelveld, dan krijgt het de toetsen.'),
+
+    /* Wezens */
+    stmt('sim_kind_color', C.creatures, 'geef soort %1 kleur %2', [any('KIND'), any('COLOR')], 'Alle wezens van deze soort krijgen deze kleur.'),
+    stmt('sim_kind_size', C.creatures, 'geef soort %1 grootte %2', [any('KIND'), num('SIZE')], 'De grootte is de straal van het wezen.'),
+    stmt('sim_kind_shape', C.creatures, 'geef soort %1 de vorm %2', [any('KIND'),
+      dd('SHAPE', [['cirkel', 'circle'], ['vierkant', 'square'], ['pijl', 'arrow']])]),
+    stmt('sim_spawn', C.creatures, 'maak %1 wezens van soort %2', [num('N'), any('KIND')], 'De wezens verschijnen op willekeurige plekken.'),
+    stmt('sim_spawn_at', C.creatures, 'maak wezen van soort %1 op x: %2 y: %3', [any('KIND'), num('X'), num('Y')]),
+    value('sim_spawn_at_value', C.creatures, 'nieuw wezen van soort %1 op x: %2 y: %3', [any('KIND'), num('X'), num('Y')], null,
+      'Maakt een wezen en geeft het terug, zodat je het in een variabele kunt zetten.'),
+    stmt('sim_clone', C.creatures, 'maak een kopie van %1', [any('W')]),
+    value('sim_clone_value', C.creatures, 'kopie van %1', [any('W')], null, 'Maakt een kopie en geeft die terug.'),
+    stmt('sim_remove', C.creatures, 'verwijder %1', [any('W')]),
+    { type: 'sim_foreach', message0: 'voor elk wezen %1 van soort %2', args0: [
+        { type: 'field_variable', name: 'VAR', variable: 'wezen' }, any('KIND')],
+      message1: 'doe %1', args1: [{ type: 'input_statement', name: 'DO' }],
+      previousStatement: null, nextStatement: null, colour: C.creatures, inputsInline: true,
+      tooltip: 'Voert de blokken uit voor elk wezen van deze soort. Typ * als soort voor alle wezens.' },
+    value('sim_all_of_kind', C.creatures, 'alle wezens van soort %1', [any('KIND')], 'Array', 'Geeft een lijst met wezens.'),
+    value('sim_prop_get', C.creatures, '%1 van %2', [dd('PROP', PROPS), any('W')]),
+    stmt('sim_prop_set', C.creatures, 'zet %1 van %2 op %3', [dd('PROP', PROPS), any('W'), any('V')]),
+    stmt('sim_prop_change', C.creatures, 'verander %1 van %2 met %3', [dd('PROP', PROPS), any('W'), num('V')]),
+    value('sim_cprop_get', C.creatures, 'eigenschap %1 van %2', [txt('NAME', 'honger'), any('W')], null,
+      'Een eigen eigenschap die je zelf verzint. Hij begint op 0.'),
+    stmt('sim_cprop_set', C.creatures, 'zet eigenschap %1 van %2 op %3', [txt('NAME', 'honger'), any('W'), any('V')]),
+    stmt('sim_cprop_change', C.creatures, 'verander eigenschap %1 van %2 met %3', [txt('NAME', 'honger'), any('W'), num('V')]),
+
+    /* Beweging */
+    stmt('sim_move', C.motion, 'beweeg %1 %2 stappen', [any('W'), num('N')], 'Beweegt het wezen vooruit in zijn eigen richting.'),
+    stmt('sim_turn', C.motion, 'draai %1 %2 %3 graden', [any('W'),
+      dd('DIR', [['rechtsom ↻', 'right'], ['linksom ↺', 'left']]), num('N')]),
+    stmt('sim_look_xy', C.motion, 'richt %1 op x: %2 y: %3', [any('W'), num('X'), num('Y')]),
+    stmt('sim_look_creature', C.motion, 'richt %1 op %2', [any('W'), any('O')]),
+    stmt('sim_edge_mode', C.motion, 'laat %1 %2', [any('W'),
+      dd('MODE', [['stuiteren aan de rand', 'bounce'], ['doorlopen naar de overkant', 'wrap']])],
+      'Zet dit onder een beweeg-blok, zodat het wezen binnen het speelveld blijft.'),
+    stmt('sim_push', C.motion, 'duw %1 met kracht x: %2 y: %3', [any('W'), num('X'), num('Y')],
+      'Werkt op soorten waarvoor natuurkunde aan staat.'),
+
+    /* Natuurkunde */
+    stmt('sim_gravity', C.physics, 'zet zwaartekracht op %1', [num('G')], '0 is geen zwaartekracht. Rond 0,2 valt het mooi.'),
+    stmt('sim_drag', C.physics, 'zet luchtweerstand op %1 %', [num('D')]),
+    stmt('sim_bounciness', C.physics, 'zet stuiterkracht op %1 %', [num('B')], '100 betekent dat niets energie verliest.'),
+    stmt('sim_edges', C.physics, 'randen van het speelveld: %1', [dd('MODE', [['stuiteren', 'bounce'], ['doorlopen', 'wrap'], ['open', 'none']])]),
+    stmt('sim_physics', C.physics, 'natuurkunde voor soort %1 %2', [any('KIND'), dd('ON', ON_OFF)],
+      'Met natuurkunde aan gebruiken wezens snelheid x en y, zwaartekracht en luchtweerstand.'),
+    stmt('sim_collide', C.physics, 'laat soort %1 botsen: %2', [any('KIND'), dd('ON', ON_OFF)]),
+    stmt('sim_attract', C.physics, 'soort %1 trekt elkaar aan met kracht %2', [any('KIND'), num('K')], 'Probeer eerst kleine getallen, zoals 0,5.'),
+
+    /* Raster */
+    stmt('sim_grid_create', C.grid, 'maak raster van %1 bij %2 cellen', [num('W'), num('H')], 'Alle cellen beginnen op 0, dus leeg.'),
+    stmt('sim_grid_random', C.grid, 'vul raster: %1 % wordt %2, de rest wordt %3', [num('P'), num('V'), num('R')]),
+    { type: 'sim_grid_each', message0: 'voor elke cel %1 %2', args0: [
+        { type: 'field_variable', name: 'X', variable: 'cel x' },
+        { type: 'field_variable', name: 'Y', variable: 'cel y' }],
+      message1: 'doe %1', args1: [{ type: 'input_statement', name: 'DO' }],
+      previousStatement: null, nextStatement: null, colour: C.grid, inputsInline: true,
+      tooltip: 'Alle cellen kijken naar dezelfde vorige stap. Wijzigingen zijn zichtbaar na de stap.' },
+    value('sim_cell_get', C.grid, 'waarde van cel x: %1 y: %2', [num('X'), num('Y')], 'Number', 'De randen sluiten op elkaar aan.'),
+    stmt('sim_cell_set', C.grid, 'zet cel x: %1 y: %2 op %3', [num('X'), num('Y'), num('V')]),
+    value('sim_cell_neighbors', C.grid, 'aantal buren van cel x: %1 y: %2 met waarde %3, %4', [num('X'), num('Y'), num('V'),
+      dd('AROUND', [['rondom (8)', '8'], ['kruis (4)', '4']])], 'Number'),
+    value('sim_cell_count', C.grid, 'aantal cellen met waarde %1', [num('V')], 'Number'),
+    stmt('sim_cell_color', C.grid, 'geef cellen met waarde %1 de kleur %2', [num('V'), any('COLOR')]),
+    value('sim_grid_size', C.grid, 'raster %1', [dd('DIM', [['breedte', 'gridWidth'], ['hoogte', 'gridHeight']])], 'Number'),
+    value('sim_mouse_cell', C.grid, 'cel onder de muis, %1', [dd('AXIS', [['x', 'mouseCellX'], ['y', 'mouseCellY']])], 'Number'),
+
+    /* Waarnemen */
+    value('sim_nearest', C.sensing, 'dichtstbijzijnde wezen van soort %1 bij %2', [any('KIND'), any('W')], null,
+      'Geeft niets terug als er geen is. Controleer dat met "bestaat ... nog?".'),
+    value('sim_exists', C.sensing, 'bestaat %1 nog?', [any('W')], 'Boolean'),
+    value('sim_touching', C.sensing, '%1 raakt soort %2?', [any('W'), any('KIND')], 'Boolean'),
+    value('sim_touching_which', C.sensing, 'wezen van soort %2 dat %1 raakt', [any('W'), any('KIND')], null),
+    value('sim_distance', C.sensing, 'afstand tussen %1 en %2', [any('A'), any('B')], 'Number'),
+    value('sim_count', C.sensing, 'aantal wezens van soort %1', [any('KIND')], 'Number'),
+    value('sim_mouse', C.sensing, 'muis %1', [dd('AXIS', [['x', 'mouseX'], ['y', 'mouseY']])], 'Number'),
+    value('sim_mouse_down', C.sensing, 'muis is ingedrukt?', [], 'Boolean'),
+    value('sim_key_down', C.sensing, 'toets %1 is ingedrukt?', [dd('KEY', KEYS)], 'Boolean'),
+    value('sim_edge', C.sensing, 'plek van de %1 rand', [dd('SIDE', [['linker', 'left'], ['rechter', 'right'], ['bovenste', 'top'], ['onderste', 'bottom']])], 'Number'),
+    value('sim_time', C.sensing, '%1', [dd('WHAT', [['stapnummer', 'frameNumber'], ['seconden sinds start', 'elapsedSeconds']])], 'Number'),
+
+    /* Uitvoer */
+    stmt('sim_log', C.output, 'schrijf %1 in het logboek', [any('V')]),
+    stmt('sim_plot', C.output, 'zet %1 in grafiek %2', [num('V'), any('NAME')], 'Elke stap komt er een punt bij.'),
+    stmt('sim_background', C.output, 'zet achtergrond op %1', [any('COLOR')]),
+    stmt('sim_trails', C.output, 'sporen laten zien: %1', [dd('ON', ON_OFF)]),
+    value('sim_random_color', C.output, 'willekeurige kleur', [], null),
+    value('sim_hsl', C.output, 'kleur met tint %1 (0 tot 360)', [num('H')], null),
+
+    /* Besturing */
+    { type: 'sim_chance', message0: 'met %1 % kans', args0: [num('P')], message1: 'doe %1', args1: [{ type: 'input_statement', name: 'DO' }],
+      previousStatement: null, nextStatement: null, colour: C.control, inputsInline: true,
+      tooltip: 'Voert de blokken uit met deze kans, elke keer dat dit blok aan de beurt is.' },
+    stmt('sim_stop', C.control, 'stop de simulatie', []),
+    stmt('sim_list_push', C.lists, 'voeg %1 toe aan %2', [any('V'), any('LIST')]),
+    value('sim_list_random', C.lists, 'willekeurig item uit %1', [any('LIST')], null)
+  ];
+
+  Blockly.common.defineBlocksWithJsonArray(defs);
+
+  /* Lussen met onze eigen blokken tellen mee voor "stop de lus" en "volgende ronde". */
+  try {
+    const loopTypes = Blockly.libraryBlocks.loops.loopTypes;
+    if (loopTypes && loopTypes.add) {
+      loopTypes.add('sim_foreach');
+      loopTypes.add('sim_grid_each');
+    }
+  } catch (e) { /* oudere versie */ }
+
+  /* ---------- generatoren ---------- */
+  gen.addReservedWords((ctx.apiNames || []).join(','));
+  const F = gen.forBlock;
+
+  function v(block, name, fallback) {
+    return gen.valueToCode(block, name, Order.NONE) || (fallback === undefined ? 'null' : fallback);
+  }
+  function n(block, name, fallback) { return v(block, name, fallback === undefined ? '0' : fallback); }
+  function s(block, name) { return v(block, name, "''"); }
+  function q(text) { return gen.quote_(text); }
+  function wrap(code) { return /^-?[\d.]+$|^[A-Za-z_]\w*$/.test(code) ? code : '(' + code + ')'; }
+  function call(name, args) { return name + '(' + args.join(', ') + ')'; }
+  function line(name, args) { return call(name, args) + ';\n'; }
+  function expr(name, args) { return [call(name, args), Order.FUNCTION_CALL]; }
+  function body(block, input) { return gen.statementToCode(block, input); }
+
+  /* Een hoed levert alleen een lijstje op; de wrapper wordt in generateProgram gemaakt. */
+  ['sim_when_start', 'sim_every_step', 'sim_on_click', 'sim_on_key'].forEach(function (t) { F[t] = function () { return ''; }; });
+  const HATS = {
+    sim_when_start: function () { return 'onStart'; },
+    sim_every_step: function () { return 'onFrame'; },
+    sim_on_click: function () { return 'onClick'; },
+    sim_on_key: function (b) { return 'onKey(' + q(b.getFieldValue('KEY')) + ', '; }
+  };
+
+  F.sim_kind_color = function (b) { return line('defineKind', [s(b, 'KIND'), '{ color: ' + v(b, 'COLOR', "'#888888'") + ' }']); };
+  F.sim_kind_size = function (b) { return line('defineKind', [s(b, 'KIND'), '{ size: ' + n(b, 'SIZE', '5') + ' }']); };
+  F.sim_kind_shape = function (b) { return line('defineKind', [s(b, 'KIND'), '{ shape: ' + q(b.getFieldValue('SHAPE')) + ' }']); };
+  F.sim_spawn = function (b) { return line('spawn', [s(b, 'KIND'), n(b, 'N', '1')]); };
+  F.sim_spawn_at = function (b) { return line('spawnAt', [s(b, 'KIND'), n(b, 'X'), n(b, 'Y')]); };
+  F.sim_spawn_at_value = function (b) { return expr('spawnAt', [s(b, 'KIND'), n(b, 'X'), n(b, 'Y')]); };
+  F.sim_clone = function (b) { return line('cloneCreature', [v(b, 'W')]); };
+  F.sim_clone_value = function (b) { return expr('cloneCreature', [v(b, 'W')]); };
+  F.sim_remove = function (b) { return line('removeCreature', [v(b, 'W')]); };
+  F.sim_foreach = function (b) {
+    const name = gen.getVariableName(b.getFieldValue('VAR'));
+    return 'for (const ' + name + ' of creaturesOf(' + s(b, 'KIND') + ')) {\n' +
+      '  if (!' + name + '.alive) continue;\n' + body(b, 'DO') + '}\n';
+  };
+  F.sim_all_of_kind = function (b) { return expr('creaturesOf', [s(b, 'KIND')]); };
+  F.sim_prop_get = function (b) { return expr('getProp', [v(b, 'W'), q(b.getFieldValue('PROP'))]); };
+  F.sim_prop_set = function (b) { return line('setProp', [v(b, 'W'), q(b.getFieldValue('PROP')), v(b, 'V')]); };
+  F.sim_prop_change = function (b) { return line('changeProp', [v(b, 'W'), q(b.getFieldValue('PROP')), n(b, 'V')]); };
+  F.sim_cprop_get = function (b) { return expr('getProp', [v(b, 'W'), q(b.getFieldValue('NAME'))]); };
+  F.sim_cprop_set = function (b) { return line('setProp', [v(b, 'W'), q(b.getFieldValue('NAME')), v(b, 'V')]); };
+  F.sim_cprop_change = function (b) { return line('changeProp', [v(b, 'W'), q(b.getFieldValue('NAME')), n(b, 'V')]); };
+
+  F.sim_move = function (b) { return line('move', [v(b, 'W'), n(b, 'N')]); };
+  F.sim_turn = function (b) {
+    const d = n(b, 'N');
+    return line('turn', [v(b, 'W'), b.getFieldValue('DIR') === 'left' ? d : '-' + wrap(d)]);
+  };
+  F.sim_look_xy = function (b) { return line('lookAt', [v(b, 'W'), n(b, 'X'), n(b, 'Y')]); };
+  F.sim_look_creature = function (b) { return line('lookAtCreature', [v(b, 'W'), v(b, 'O')]); };
+  F.sim_edge_mode = function (b) { return line(b.getFieldValue('MODE') === 'wrap' ? 'wrapAround' : 'bounce', [v(b, 'W')]); };
+  F.sim_push = function (b) { return line('push', [v(b, 'W'), n(b, 'X'), n(b, 'Y')]); };
+
+  F.sim_gravity = function (b) { return line('setGravity', [n(b, 'G')]); };
+  F.sim_drag = function (b) { return line('setDrag', [wrap(n(b, 'D')) + ' / 100']); };
+  F.sim_bounciness = function (b) { return line('setBounce', [wrap(n(b, 'B')) + ' / 100']); };
+  F.sim_edges = function (b) { return line('setEdges', [q(b.getFieldValue('MODE'))]); };
+  F.sim_physics = function (b) { return line('setPhysics', [s(b, 'KIND'), b.getFieldValue('ON')]); };
+  F.sim_collide = function (b) { return line('setCollisions', [s(b, 'KIND'), b.getFieldValue('ON')]); };
+  F.sim_attract = function (b) { return line('setAttraction', [s(b, 'KIND'), n(b, 'K')]); };
+
+  F.sim_grid_create = function (b) { return line('createGrid', [n(b, 'W', '48'), n(b, 'H', '36'), '0']); };
+  F.sim_grid_random = function (b) { return line('fillGridRandom', [n(b, 'P'), n(b, 'V', '1'), n(b, 'R')]); };
+  F.sim_grid_each = function (b) {
+    const x = gen.getVariableName(b.getFieldValue('X'));
+    const y = gen.getVariableName(b.getFieldValue('Y'));
+    return 'for (const [' + x + ', ' + y + '] of cellCoords()) {\n' + body(b, 'DO') + '}\n';
+  };
+  F.sim_cell_get = function (b) { return expr('getCell', [n(b, 'X'), n(b, 'Y')]); };
+  F.sim_cell_set = function (b) { return line('setCell', [n(b, 'X'), n(b, 'Y'), n(b, 'V')]); };
+  F.sim_cell_neighbors = function (b) { return expr('countNeighbors', [n(b, 'X'), n(b, 'Y'), n(b, 'V', '1'), b.getFieldValue('AROUND')]); };
+  F.sim_cell_count = function (b) { return expr('countCells', [n(b, 'V', '1')]); };
+  F.sim_cell_color = function (b) { return line('setCellColor', [n(b, 'V', '1'), v(b, 'COLOR', "'#888888'")]); };
+  F.sim_grid_size = function (b) { return expr(b.getFieldValue('DIM'), []); };
+  F.sim_mouse_cell = function (b) { return expr(b.getFieldValue('AXIS'), []); };
+
+  F.sim_nearest = function (b) { return expr('nearest', [v(b, 'W'), s(b, 'KIND')]); };
+  F.sim_exists = function (b) { return expr('exists', [v(b, 'W')]); };
+  F.sim_touching = function (b) { return expr('touching', [v(b, 'W'), s(b, 'KIND')]); };
+  F.sim_touching_which = function (b) { return expr('touchingCreature', [v(b, 'W'), s(b, 'KIND')]); };
+  F.sim_distance = function (b) { return expr('distance', [v(b, 'A'), v(b, 'B')]); };
+  F.sim_count = function (b) { return expr('count', [s(b, 'KIND')]); };
+  F.sim_mouse = function (b) { return expr(b.getFieldValue('AXIS'), []); };
+  F.sim_mouse_down = function () { return expr('mouseDown', []); };
+  F.sim_key_down = function (b) { return expr('keyDown', [q(b.getFieldValue('KEY'))]); };
+  F.sim_edge = function (b) { return expr('edge', [q(b.getFieldValue('SIDE'))]); };
+  F.sim_time = function (b) { return expr(b.getFieldValue('WHAT'), []); };
+
+  F.sim_log = function (b) { return line('log', [v(b, 'V', "''")]); };
+  F.sim_plot = function (b) { return line('plot', [s(b, 'NAME'), n(b, 'V')]); };
+  F.sim_background = function (b) { return line('setBackground', [v(b, 'COLOR', "'#101624'")]); };
+  F.sim_trails = function (b) { return line('setTrails', [b.getFieldValue('ON')]); };
+  F.sim_random_color = function () { return expr('randomColor', []); };
+  F.sim_hsl = function (b) { return expr('hsl', [n(b, 'H')]); };
+
+  F.sim_chance = function (b) { return 'if (Math.random() * 100 < ' + n(b, 'P') + ') {\n' + body(b, 'DO') + '}\n'; };
+  F.sim_stop = function () { return 'stopSim();\n'; };
+  F.sim_list_push = function (b) { return '(' + v(b, 'LIST', '[]') + ').push(' + v(b, 'V') + ');\n'; };
+  F.sim_list_random = function (b) { return expr('randomItem', [v(b, 'LIST', '[]')]); };
+
+  /* ---------- hele programma ---------- */
+
+  function isEnabled(block) {
+    return typeof block.isEnabled === 'function' ? block.isEnabled() : !block.disabled;
+  }
+
+  /* Alleen blokken onder een hoed (of een eigen blok) doen mee, net als in Scratch. */
+  function generateProgram(workspace) {
+    gen.init(workspace);
+    let out = '';
+    const blocks = workspace.getTopBlocks(true);
+    for (const block of blocks) {
+      if (!isEnabled(block)) continue;
+      if (HATS[block.type]) {
+        const open = HATS[block.type](block);
+        const next = block.getNextBlock();
+        const inner = next ? gen.prefixLines(gen.blockToCode(next), gen.INDENT) : '';
+        const hasArgs = open.charAt(open.length - 1) === ' ';
+        out += hasArgs ? open + 'function () {\n' + inner + '});\n\n' : open + '(function () {\n' + inner + '});\n\n';
+      } else if (block.type === 'procedures_defnoreturn' || block.type === 'procedures_defreturn') {
+        gen.blockToCode(block);
+      }
+    }
+    let code = gen.finish(out);
+    code = code.replace(/\n{3,}/g, '\n\n').replace(/^\s+/, '').replace(/\s+$/, '') + '\n';
+    return code;
+  }
+
+  /* ---------- thema's ---------- */
+
+  function style(primary) {
+    return { colourPrimary: primary };
+  }
+  const blockStyles = {
+    logic_blocks: style(C.control),
+    loop_blocks: style(C.control),
+    math_blocks: style(C.operators),
+    text_blocks: style(C.operators),
+    list_blocks: style(C.lists),
+    colour_blocks: style(C.output),
+    variable_blocks: style(C.variables),
+    variable_dynamic_blocks: style(C.variables),
+    procedure_blocks: style(C.procedures),
+    hat_blocks: style(C.events),
+    sim_hat: { colourPrimary: C.events, hat: 'cap' }
+  };
+  const categoryStyles = {
+    cat_events: { colour: C.events }, cat_creatures: { colour: C.creatures }, cat_motion: { colour: C.motion },
+    cat_physics: { colour: C.physics }, cat_grid: { colour: C.grid }, cat_sensing: { colour: C.sensing },
+    cat_output: { colour: C.output }, cat_control: { colour: C.control }, cat_operators: { colour: C.operators },
+    cat_variables: { colour: C.variables }, cat_lists: { colour: C.lists }, cat_procedures: { colour: C.procedures }
+  };
+  function theme(name, comp) {
+    return Blockly.Theme.defineTheme(name, {
+      name: name,
+      base: Blockly.Themes.Classic,
+      blockStyles: blockStyles,
+      categoryStyles: categoryStyles,
+      componentStyles: comp,
+      fontStyle: { family: 'system-ui, -apple-system, "Segoe UI", sans-serif', weight: '600', size: 11 }
+    });
+  }
+  const themes = {
+    light: theme('simLight', {
+      workspaceBackgroundColour: '#f4f6fa', toolboxBackgroundColour: '#ffffff', toolboxForegroundColour: '#3b4558',
+      flyoutBackgroundColour: '#e9edf5', flyoutForegroundColour: '#3b4558', flyoutOpacity: 1,
+      scrollbarColour: '#98a3b8', scrollbarOpacity: 0.55, insertionMarkerColour: '#3b4558', insertionMarkerOpacity: 0.25,
+      markerColour: '#3b4558', cursorColour: '#d0d0d0'
+    }),
+    dark: theme('simDark', {
+      workspaceBackgroundColour: '#161b27', toolboxBackgroundColour: '#1d2433', toolboxForegroundColour: '#c9d1e3',
+      flyoutBackgroundColour: '#232b3d', flyoutForegroundColour: '#c9d1e3', flyoutOpacity: 1,
+      scrollbarColour: '#6b7690', scrollbarOpacity: 0.6, insertionMarkerColour: '#ffffff', insertionMarkerOpacity: 0.25,
+      markerColour: '#ffffff', cursorColour: '#d0d0d0'
+    })
+  };
+
+  /* ---------- toolbox ---------- */
+
+  const N = function (value) { return { shadow: { type: 'math_number', fields: { NUM: value } } }; };
+  const T = function (text) { return { shadow: { type: 'text', fields: { TEXT: text } } }; };
+  const COL = function (c) { return { shadow: { type: 'colour_picker', fields: { COLOUR: c } } }; };
+  const VAR = function (name) { return { block: { type: 'variables_get', fields: { VAR: { name: name } } } }; };
+  const B = function (type, inputs, fields, extraState) {
+    const o = { kind: 'block', type: type };
+    if (inputs) o.inputs = inputs;
+    if (fields) o.fields = fields;
+    if (extraState) o.extraState = extraState;
+    return o;
+  };
+  const W = function () { return VAR('wezen'); };
+  const KIND = function (k) { return T(k || 'konijn'); };
+
+  const toolbox = {
+    kind: 'categoryToolbox',
+    contents: [
+      { kind: 'category', name: 'Gebeurtenissen', categorystyle: 'cat_events', contents: [
+        B('sim_when_start'), B('sim_every_step'), B('sim_on_click'), B('sim_on_key')
+      ] },
+      { kind: 'category', name: 'Wezens', categorystyle: 'cat_creatures', contents: [
+        B('sim_kind_color', { KIND: KIND(), COLOR: COL('#4c8bf5') }),
+        B('sim_kind_size', { KIND: KIND(), SIZE: N(5) }),
+        B('sim_kind_shape', { KIND: KIND() }),
+        B('sim_spawn', { N: N(20), KIND: KIND() }),
+        B('sim_spawn_at', { KIND: KIND(), X: N(0), Y: N(0) }),
+        B('sim_spawn_at_value', { KIND: KIND(), X: N(0), Y: N(0) }),
+        B('sim_clone', { W: W() }),
+        B('sim_clone_value', { W: W() }),
+        B('sim_remove', { W: W() }),
+        B('sim_foreach', { KIND: KIND() }, { VAR: { name: 'wezen' } }),
+        B('sim_all_of_kind', { KIND: KIND() }),
+        B('sim_prop_get', { W: W() }),
+        B('sim_prop_set', { W: W(), V: N(0) }),
+        B('sim_prop_change', { W: W(), V: N(1) }),
+        B('sim_cprop_get', { W: W() }),
+        B('sim_cprop_set', { W: W(), V: N(0) }),
+        B('sim_cprop_change', { W: W(), V: N(1) })
+      ] },
+      { kind: 'category', name: 'Beweging', categorystyle: 'cat_motion', contents: [
+        B('sim_move', { W: W(), N: N(2) }),
+        B('sim_turn', { W: W(), N: N(15) }),
+        B('sim_look_xy', { W: W(), X: N(0), Y: N(0) }),
+        B('sim_look_creature', { W: W(), O: VAR('wezen') }),
+        B('sim_edge_mode', { W: W() }),
+        B('sim_push', { W: W(), X: N(0), Y: N(5) })
+      ] },
+      { kind: 'category', name: 'Natuurkunde', categorystyle: 'cat_physics', contents: [
+        B('sim_gravity', { G: N(0.2) }),
+        B('sim_drag', { D: N(1) }),
+        B('sim_bounciness', { B: N(90) }),
+        B('sim_edges'),
+        B('sim_physics', { KIND: KIND('bal') }),
+        B('sim_collide', { KIND: KIND('bal') }),
+        B('sim_attract', { KIND: KIND('planeet'), K: N(0.5) })
+      ] },
+      { kind: 'category', name: 'Raster', categorystyle: 'cat_grid', contents: [
+        B('sim_grid_create', { W: N(60), H: N(45) }),
+        B('sim_grid_random', { P: N(30), V: N(1), R: N(0) }),
+        B('sim_grid_each', null, { X: { name: 'cel x' }, Y: { name: 'cel y' } }),
+        B('sim_cell_get', { X: { block: { type: 'variables_get', fields: { VAR: { name: 'cel x' } } } },
+          Y: { block: { type: 'variables_get', fields: { VAR: { name: 'cel y' } } } } }),
+        B('sim_cell_set', { X: { block: { type: 'variables_get', fields: { VAR: { name: 'cel x' } } } },
+          Y: { block: { type: 'variables_get', fields: { VAR: { name: 'cel y' } } } }, V: N(1) }),
+        B('sim_cell_neighbors', { X: { block: { type: 'variables_get', fields: { VAR: { name: 'cel x' } } } },
+          Y: { block: { type: 'variables_get', fields: { VAR: { name: 'cel y' } } } }, V: N(1) }),
+        B('sim_cell_count', { V: N(1) }),
+        B('sim_cell_color', { V: N(1), COLOR: COL('#34c28a') }),
+        B('sim_grid_size'),
+        B('sim_mouse_cell')
+      ] },
+      { kind: 'category', name: 'Waarnemen', categorystyle: 'cat_sensing', contents: [
+        B('sim_nearest', { KIND: KIND(), W: W() }),
+        B('sim_exists', { W: VAR('wezen') }),
+        B('sim_touching', { W: W(), KIND: KIND() }),
+        B('sim_touching_which', { W: W(), KIND: KIND() }),
+        B('sim_distance', { A: W(), B: VAR('wezen') }),
+        B('sim_count', { KIND: KIND() }),
+        B('sim_mouse'), B('sim_mouse_down'), B('sim_key_down'), B('sim_edge'), B('sim_time')
+      ] },
+      { kind: 'category', name: 'Uitvoer', categorystyle: 'cat_output', contents: [
+        B('sim_log', { V: T('hallo') }),
+        B('sim_plot', { V: N(0), NAME: T('aantal') }),
+        B('sim_background', { COLOR: COL('#101624') }),
+        B('sim_trails'),
+        B('sim_random_color'),
+        B('sim_hsl', { H: N(200) }),
+        B('colour_picker')
+      ] },
+      { kind: 'sep' },
+      { kind: 'category', name: 'Besturing', categorystyle: 'cat_control', contents: [
+        B('controls_if'),
+        B('controls_if', null, null, { hasElse: true }),
+        B('sim_chance', { P: N(5) }),
+        B('controls_repeat_ext', { TIMES: N(10) }),
+        B('controls_whileUntil'),
+        B('controls_for', { FROM: N(1), TO: N(10), BY: N(1) }),
+        B('controls_flow_statements'),
+        B('sim_stop')
+      ] },
+      { kind: 'category', name: 'Operators', categorystyle: 'cat_operators', contents: [
+        B('math_arithmetic', { A: N(1), B: N(1) }),
+        B('math_random_int', { FROM: N(1), TO: N(10) }),
+        B('math_random_float'),
+        B('math_modulo', { DIVIDEND: N(10), DIVISOR: N(3) }),
+        B('math_round', { NUM: N(3.7) }),
+        B('math_single', { NUM: N(9) }),
+        B('math_trig', { NUM: N(45) }),
+        B('math_constrain', { VALUE: N(50), LOW: N(1), HIGH: N(100) }),
+        B('math_number', null, { NUM: 0 }),
+        B('logic_compare', { A: N(1), B: N(1) }),
+        B('logic_operation'),
+        B('logic_negate'),
+        B('logic_boolean'),
+        B('text', null, { TEXT: 'tekst' }),
+        B('text_join'),
+        B('text_length', { VALUE: T('tekst') })
+      ] },
+      { kind: 'category', name: 'Variabelen', categorystyle: 'cat_variables', custom: 'VARIABLE' },
+      { kind: 'category', name: 'Lijsten', categorystyle: 'cat_lists', contents: [
+        B('lists_create_with', null, null, { itemCount: 0 }),
+        B('lists_create_with', null, null, { itemCount: 3 }),
+        B('lists_repeat', { NUM: N(5) }),
+        B('lists_length'),
+        B('lists_isEmpty'),
+        B('lists_indexOf'),
+        B('lists_getIndex'),
+        B('lists_setIndex'),
+        B('sim_list_push', { V: N(1) }),
+        B('sim_list_random'),
+        B('controls_forEach', null, { VAR: { name: 'item' } })
+      ] },
+      { kind: 'category', name: 'Mijn blokken', categorystyle: 'cat_procedures', custom: 'MIJN_BLOKKEN' }
+    ]
+  };
+
+  /* Standaardvariabelen die altijd klaar staan. */
+  const DEFAULT_VARIABLES = ['wezen', 'cel x', 'cel y', 'item'];
+
+  return {
+    COLORS: COLORS, themes: themes, toolbox: toolbox, generateProgram: generateProgram,
+    DEFAULT_VARIABLES: DEFAULT_VARIABLES
+  };
+}
+
+if (typeof module !== 'undefined') module.exports = registerSimBlocks;
+
+
+/* Voorbeeldprogramma's als Blockly-serialisatie, opgebouwd met een kleine hulptaal. */
+const SIM_EXAMPLES = (function () {
+  const vid = function (name) { return 'var_' + name.replace(/\s+/g, '_'); };
+
+  function Num(n) { return { shadow: { type: 'math_number', fields: { NUM: n } } }; }
+  function Txt(t) { return { shadow: { type: 'text', fields: { TEXT: t } } }; }
+  function Col(c) { return { shadow: { type: 'colour_picker', fields: { COLOUR: c } } }; }
+  function Var(name) { return { block: { type: 'variables_get', fields: { VAR: { id: vid(name) } } } }; }
+  function Blk(type, inputs, fields, extra) {
+    const b = { type: type };
+    if (inputs) b.inputs = inputs;
+    if (fields) b.fields = fields;
+    if (extra) Object.assign(b, extra);
+    return b;
+  }
+  function In(block) { return { block: block }; }
+  /* Zet blokken onder elkaar. */
+  function Seq(blocks) {
+    for (let i = blocks.length - 2; i >= 0; i--) blocks[i].next = { block: blocks[i + 1] };
+    return blocks[0];
+  }
+  function Do(blocks) { return { block: Seq(blocks) }; }
+  function Hat(type, fields, x, y, blocks) {
+    const h = Blk(type, null, fields, { x: x, y: y });
+    if (blocks.length) h.next = { block: Seq(blocks) };
+    return h;
+  }
+  function Rand(a, b) { return In(Blk('math_random_int', { FROM: Num(a), TO: Num(b) })); }
+  function Calc(op, a, b) {
+    return In(Blk('math_arithmetic', { A: a, B: b }, { OP: op }));
+  }
+  function Cmp(op, a, b) { return In(Blk('logic_compare', { A: a, B: b }, { OP: op })); }
+  function Prop(prop, who) { return In(Blk('sim_prop_get', { W: who }, { PROP: prop })); }
+  function CProp(name, who) { return In(Blk('sim_cprop_get', { W: who }, { NAME: name })); }
+  function Foreach(who, kind, blocks) {
+    return Blk('sim_foreach', { KIND: Txt(kind), DO: Do(blocks) }, { VAR: { id: vid(who) } });
+  }
+  function If(cond, blocks, elseBlocks) {
+    const test = cond.type ? In(cond) : cond;
+    const b = Blk('controls_if', { IF0: test, DO0: Do(blocks) });
+    if (elseBlocks) { b.extraState = { hasElse: true }; b.inputs.ELSE = Do(elseBlocks); }
+    return b;
+  }
+  function Chance(p, blocks) { return Blk('sim_chance', { P: Num(p), DO: Do(blocks) }); }
+  function Set(name, value) { return Blk('variables_set', { VALUE: value }, { VAR: { id: vid(name) } }); }
+  function Plot(name, value) { return Blk('sim_plot', { V: value, NAME: Txt(name) }); }
+  function Count(kind) { return In(Blk('sim_count', { KIND: Txt(kind) })); }
+  function Exists(v) { return Blk('sim_exists', { W: Var(v) }); }
+
+  function project(names, blocks) {
+    return {
+      blocks: { languageVersion: 0, blocks: blocks },
+      variables: names.map(function (n) { return { name: n, id: vid(n) }; })
+    };
+  }
+
+  /* 1. Stuiterende ballen */
+  const balls = project(['wezen', 'cel x', 'cel y', 'item'], [
+    Hat('sim_when_start', null, 24, 24, [
+      Blk('sim_background', { COLOR: Col('#101624') }),
+      Blk('sim_kind_color', { KIND: Txt('bal'), COLOR: Col('#4c8bf5') }),
+      Blk('sim_kind_size', { KIND: Txt('bal'), SIZE: Num(7) }),
+      Blk('sim_physics', { KIND: Txt('bal') }, { ON: 'true' }),
+      Blk('sim_collide', { KIND: Txt('bal') }, { ON: 'true' }),
+      Blk('sim_gravity', { G: Num(0.15) }),
+      Blk('sim_bounciness', { B: Num(85) }),
+      Blk('sim_edges', null, { MODE: 'bounce' }),
+      Blk('sim_spawn', { N: Num(25), KIND: Txt('bal') }),
+      Foreach('wezen', 'bal', [
+        Blk('sim_prop_set', { W: Var('wezen'), V: Rand(-5, 5) }, { PROP: 'vx' }),
+        Blk('sim_prop_set', { W: Var('wezen'), V: Rand(0, 6) }, { PROP: 'vy' }),
+        Blk('sim_prop_set', { W: Var('wezen'), V: In(Blk('sim_random_color')) }, { PROP: 'color' })
+      ])
+    ]),
+    Hat('sim_on_click', null, 24, 330, [
+      Blk('sim_spawn_at', { KIND: Txt('bal'), X: In(Blk('sim_mouse', null, { AXIS: 'mouseX' })), Y: In(Blk('sim_mouse', null, { AXIS: 'mouseY' })) })
+    ]),
+    Hat('sim_on_key', { KEY: 'space' }, 24, 440, [
+      Foreach('wezen', 'bal', [
+        Blk('sim_push', { W: Var('wezen'), X: Rand(-2, 2), Y: Num(6) })
+      ])
+    ]),
+    Hat('sim_every_step', null, 360, 24, [
+      Plot('ballen', Count('bal'))
+    ])
+  ]);
+
+  /* 2. Konijnen en vossen */
+  const foxes = project(['wezen', 'cel x', 'cel y', 'item', 'prooi'], [
+    Hat('sim_when_start', null, 24, 24, [
+      Blk('sim_background', { COLOR: Col('#16331f') }),
+      Blk('sim_kind_color', { KIND: Txt('konijn'), COLOR: Col('#f2ede4') }),
+      Blk('sim_kind_size', { KIND: Txt('konijn'), SIZE: Num(3) }),
+      Blk('sim_kind_color', { KIND: Txt('vos'), COLOR: Col('#f26b3a') }),
+      Blk('sim_kind_size', { KIND: Txt('vos'), SIZE: Num(5) }),
+      Blk('sim_kind_shape', { KIND: Txt('vos') }, { SHAPE: 'arrow' }),
+      Blk('sim_spawn', { N: Num(60), KIND: Txt('konijn') }),
+      Blk('sim_spawn', { N: Num(5), KIND: Txt('vos') }),
+      Foreach('wezen', 'vos', [
+        Blk('sim_prop_set', { W: Var('wezen'), V: Num(80) }, { PROP: 'energy' })
+      ])
+    ]),
+    Hat('sim_every_step', null, 24, 330, [
+      Foreach('wezen', 'konijn', [
+        Blk('sim_move', { W: Var('wezen'), N: Num(1) }),
+        Blk('sim_turn', { W: Var('wezen'), N: Rand(0, 25) }, { DIR: 'right' }),
+        Blk('sim_turn', { W: Var('wezen'), N: Rand(0, 25) }, { DIR: 'left' }),
+        Blk('sim_edge_mode', { W: Var('wezen') }, { MODE: 'wrap' }),
+        Chance(1.5, [
+          If(Cmp('LT', Count('konijn'), Num(200)), [
+            Blk('sim_clone', { W: Var('wezen') })
+          ])
+        ])
+      ]),
+      Foreach('wezen', 'vos', [
+        Set('prooi', In(Blk('sim_nearest', { KIND: Txt('konijn'), W: Var('wezen') }))),
+        If(Cmp('LT', In(Blk('sim_distance', { A: Var('wezen'), B: Var('prooi') })), Num(70)), [
+          Blk('sim_look_creature', { W: Var('wezen'), O: Var('prooi') }),
+          Blk('sim_move', { W: Var('wezen'), N: Num(1.6) })
+        ], [
+          Blk('sim_turn', { W: Var('wezen'), N: Rand(0, 30) }, { DIR: 'right' }),
+          Blk('sim_move', { W: Var('wezen'), N: Num(1) })
+        ]),
+        Blk('sim_edge_mode', { W: Var('wezen') }, { MODE: 'wrap' }),
+        Blk('sim_prop_change', { W: Var('wezen'), V: Num(-0.7) }, { PROP: 'energy' }),
+        If(Blk('sim_touching', { W: Var('wezen'), KIND: Txt('konijn') }), [
+          Blk('sim_remove', { W: In(Blk('sim_touching_which', { W: Var('wezen'), KIND: Txt('konijn') })) }),
+          Blk('sim_prop_change', { W: Var('wezen'), V: Num(25) }, { PROP: 'energy' })
+        ]),
+        If(In(Blk('logic_operation', {
+          A: Cmp('GT', Prop('energy', Var('wezen')), Num(180)),
+          B: Cmp('LT', Count('vos'), Num(40)) }, { OP: 'AND' })), [
+          Blk('sim_prop_set', { W: Var('wezen'), V: Num(90) }, { PROP: 'energy' }),
+          Blk('sim_clone', { W: Var('wezen') })
+        ]),
+        If(Cmp('LTE', Prop('energy', Var('wezen')), Num(0)), [
+          Blk('sim_remove', { W: Var('wezen') })
+        ])
+      ]),
+      Chance(2, [
+        Blk('sim_spawn', { N: Num(1), KIND: Txt('konijn') })
+      ]),
+      If(Cmp('LT', Count('vos'), Num(2)), [
+        Chance(1, [
+          Blk('sim_spawn', { N: Num(1), KIND: Txt('vos') })
+        ])
+      ]),
+      Plot('konijnen', Count('konijn')),
+      Plot('vossen', Count('vos'))
+    ])
+  ]);
+
+  /* 3. Game of Life */
+  const life = project(['wezen', 'cel x', 'cel y', 'item', 'buren'], [
+    Hat('sim_when_start', null, 24, 24, [
+      Blk('sim_background', { COLOR: Col('#0f1420') }),
+      Blk('sim_grid_create', { W: Num(64), H: Num(48) }),
+      Blk('sim_cell_color', { V: Num(1), COLOR: Col('#34c28a') }),
+      Blk('sim_grid_random', { P: Num(28), V: Num(1), R: Num(0) })
+    ]),
+    Hat('sim_every_step', null, 24, 250, [
+      Blk('sim_grid_each', { DO: Do([
+        Set('buren', In(Blk('sim_cell_neighbors', { X: Var('cel x'), Y: Var('cel y'), V: Num(1) }, { AROUND: '8' }))),
+        If(Cmp('EQ', In(Blk('sim_cell_get', { X: Var('cel x'), Y: Var('cel y') })), Num(1)), [
+          If(In(Blk('logic_operation', { A: In(Blk('logic_compare', { A: Var('buren'), B: Num(2) }, { OP: 'LT' })),
+            B: In(Blk('logic_compare', { A: Var('buren'), B: Num(3) }, { OP: 'GT' })) }, { OP: 'OR' })), [
+            Blk('sim_cell_set', { X: Var('cel x'), Y: Var('cel y'), V: Num(0) })
+          ])
+        ], [
+          If(Cmp('EQ', Var('buren'), Num(3)), [
+            Blk('sim_cell_set', { X: Var('cel x'), Y: Var('cel y'), V: Num(1) })
+          ])
+        ])
+      ]) }, { X: { id: vid('cel x') }, Y: { id: vid('cel y') } }),
+      Plot('levende cellen', In(Blk('sim_cell_count', { V: Num(1) })))
+    ]),
+    Hat('sim_on_click', null, 24, 520, [
+      Blk('sim_cell_set', {
+        X: In(Blk('sim_mouse_cell', null, { AXIS: 'mouseCellX' })),
+        Y: In(Blk('sim_mouse_cell', null, { AXIS: 'mouseCellY' })), V: Num(1)
+      })
+    ])
+  ]);
+
+  /* 4. Planeten */
+  const planets = project(['wezen', 'cel x', 'cel y', 'item'], [
+    Hat('sim_when_start', null, 24, 24, [
+      Blk('sim_background', { COLOR: Col('#070a12') }),
+      Blk('sim_trails', null, { ON: 'true' }),
+      Blk('sim_gravity', { G: Num(0) }),
+      Blk('sim_edges', null, { MODE: 'wrap' }),
+      Blk('sim_kind_size', { KIND: Txt('planeet'), SIZE: Num(4) }),
+      Blk('sim_physics', { KIND: Txt('planeet') }, { ON: 'true' }),
+      Blk('sim_attract', { KIND: Txt('planeet'), K: Num(1.2) }),
+      Blk('sim_spawn', { N: Num(14), KIND: Txt('planeet') }),
+      Foreach('wezen', 'planeet', [
+        Blk('sim_prop_set', { W: Var('wezen'), V: Rand(-2, 2) }, { PROP: 'vx' }),
+        Blk('sim_prop_set', { W: Var('wezen'), V: Rand(-2, 2) }, { PROP: 'vy' }),
+        Blk('sim_prop_set', { W: Var('wezen'), V: Rand(2, 6) }, { PROP: 'size' }),
+        Blk('sim_prop_set', { W: Var('wezen'), V: In(Blk('sim_hsl', { H: Rand(180, 300) })) }, { PROP: 'color' })
+      ])
+    ]),
+    Hat('sim_on_click', null, 24, 330, [
+      Blk('sim_spawn_at', { KIND: Txt('planeet'), X: In(Blk('sim_mouse', null, { AXIS: 'mouseX' })), Y: In(Blk('sim_mouse', null, { AXIS: 'mouseY' })) })
+    ])
+  ]);
+
+  return [
+    { id: 'ballen', title: 'Stuiterende ballen', summary: 'Deeltjes met zwaartekracht en botsingen. Klik voor een bal, druk op spatie voor een duw.', state: balls },
+    { id: 'vossen', title: 'Konijnen en vossen', summary: 'Een ecosysteem met jagen, eten en voortplanten. De grafiek laat de aantallen zien.', state: foxes },
+    { id: 'leven', title: 'Game of Life', summary: 'Een cellulaire automaat. Klik om cellen levend te maken.', state: life },
+    { id: 'planeten', title: 'Planeten', summary: 'Wezens die elkaar aantrekken. Klik om een planeet toe te voegen.', state: planets },
+    { id: 'leeg', title: 'Leeg project', summary: 'Begin met een schone werkruimte.', state: { blocks: { languageVersion: 0, blocks: [
+      Hat('sim_when_start', null, 40, 40, [])
+    ] } } }
+  ];
+})();
+
+if (typeof module !== 'undefined') module.exports = SIM_EXAMPLES;
+
+
+/* Simblokken: de editor, het speelveld en alle knoppen. */
+(function () {
+  'use strict';
+
+  const $ = function (id) { return document.getElementById(id); };
+  const STORE_KEY = 'simblokken:project:v1';
+
+  /* ---------- opslag per kijker (mag falen) ---------- */
+  function readStore() {
+    try { return window.localStorage.getItem(STORE_KEY); } catch (e) { return null; }
+  }
+  function writeStore(text) {
+    try { window.localStorage.setItem(STORE_KEY, text); } catch (e) { /* geen opslag beschikbaar */ }
+  }
+
+  /* ---------- thema ---------- */
+  function isDark() {
+    const attr = document.documentElement.getAttribute('data-theme');
+    if (attr === 'dark') return true;
+    if (attr === 'light') return false;
+    return !!(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  }
+  function cssVar(name) {
+    return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  }
+
+  /* ---------- Blockly klaarzetten ---------- */
+  const Msg = Blockly.Msg;
+  Msg['PROCEDURES_DEFNORETURN_TITLE'] = 'definieer';
+  Msg['PROCEDURES_DEFNORETURN_PROCEDURE'] = 'mijn blok';
+  Msg['PROCEDURES_DEFRETURN_TITLE'] = 'definieer';
+  Msg['PROCEDURES_DEFRETURN_PROCEDURE'] = 'mijn functie';
+  Msg['PROCEDURES_DEFRETURN_RETURN'] = 'geef terug';
+  Msg['PROCEDURES_BEFORE_PARAMS'] = 'met:';
+
+  /* Geluiden en plaatjes komen van een server die deze pagina niet mag bereiken. */
+  if (Blockly.WorkspaceAudio) Blockly.WorkspaceAudio.prototype.load = function () {};
+
+  const sim = createSimulation({
+    canvas: $('stage'),
+    graph: $('graph'),
+    theme: function () {
+      return { bg: cssVar('--surface-2'), fg: cssVar('--fg'), muted: cssVar('--muted'), grid: cssVar('--line') };
+    },
+    onError: function (message) { showError(message); }
+  });
+
+  const kit = registerSimBlocks({
+    Blockly: Blockly,
+    javascriptGenerator: window.javascript.javascriptGenerator,
+    Order: window.javascript.Order,
+    apiNames: sim.apiNames
+  });
+
+  const workspace = Blockly.inject($('blocks'), {
+    toolbox: kit.toolbox,
+    renderer: 'zelos',
+    theme: isDark() ? kit.themes.dark : kit.themes.light,
+    trashcan: false,
+    zoom: { controls: false, wheel: false, pinch: true, startScale: 0.75, maxScale: 1.5, minScale: 0.35, scaleSpeed: 1.15 },
+    move: { scrollbars: true, drag: true, wheel: true },
+    grid: { spacing: 28, length: 2, colour: isDark() ? '#2a3348' : '#d3d9e6', snap: false },
+    media: 'data:,'
+  });
+
+  function applyTheme() {
+    const dark = isDark();
+    workspace.setTheme(dark ? kit.themes.dark : kit.themes.light);
+    sim.render();
+  }
+  if (window.matchMedia) {
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    if (mq.addEventListener) mq.addEventListener('change', applyTheme);
+  }
+  new MutationObserver(applyTheme).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
+  new ResizeObserver(function () { Blockly.svgResize(workspace); }).observe($('blocks'));
+
+  /* ---------- meldingen en dialogen ---------- */
+  let toastTimer = 0;
+  function toast(text) {
+    const el = $('toast');
+    el.textContent = text;
+    el.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { el.hidden = true; }, 2200);
+  }
+
+  let modalState = null;
+  function closeModal(result) {
+    const m = modalState;
+    modalState = null;
+    $('modal').hidden = true;
+    if (m && m.after) m.after(result);
+    if (m && m.returnFocus && m.returnFocus.focus) { try { m.returnFocus.focus(); } catch (e) { /* weg */ } }
+  }
+
+  /* opts: title, message, fields[{id,type,label,value,placeholder,rows,readonly,hint}], buttons[{label,primary,value}] */
+  function openModal(opts) {
+    if (modalState) closeModal('replaced');
+    $('modal-title').textContent = opts.title || '';
+    const msg = $('modal-message');
+    msg.textContent = opts.message || '';
+    msg.hidden = !opts.message;
+    const body = $('modal-fields');
+    body.textContent = '';
+    const inputs = {};
+    (opts.fields || []).forEach(function (f, i) {
+      const wrap = document.createElement('div');
+      wrap.className = f.type === 'checkbox' ? 'field check' : 'field';
+      const id = 'modal-f-' + i;
+      let input;
+      if (f.type === 'textarea') {
+        input = document.createElement('textarea');
+        input.rows = f.rows || 8;
+        input.spellcheck = false;
+      } else {
+        input = document.createElement('input');
+        input.type = f.type === 'checkbox' ? 'checkbox' : 'text';
+        input.autocomplete = 'off';
+      }
+      input.id = id;
+      if (f.type === 'checkbox') input.checked = !!f.value; else input.value = f.value == null ? '' : f.value;
+      if (f.placeholder) input.placeholder = f.placeholder;
+      if (f.readonly) input.readOnly = true;
+      const label = document.createElement('label');
+      label.htmlFor = id;
+      label.textContent = f.label || '';
+      if (f.type === 'checkbox') { wrap.appendChild(input); wrap.appendChild(label); }
+      else { if (f.label) wrap.appendChild(label); wrap.appendChild(input); }
+      if (f.hint) {
+        const hint = document.createElement('p');
+        hint.className = 'hint';
+        hint.textContent = f.hint;
+        wrap.appendChild(hint);
+      }
+      body.appendChild(wrap);
+      inputs[f.id] = input;
+    });
+    const bar = $('modal-buttons');
+    bar.textContent = '';
+    (opts.buttons || [{ label: 'OK', primary: true, value: 'ok' }]).forEach(function (b) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = b.primary ? 'btn primary' : 'btn';
+      btn.textContent = b.label;
+      btn.addEventListener('click', function () {
+        const values = {};
+        Object.keys(inputs).forEach(function (k) {
+          values[k] = inputs[k].type === 'checkbox' ? inputs[k].checked : inputs[k].value;
+        });
+        if (b.keepOpen) { if (b.onClick) b.onClick(values, inputs); return; }
+        closeModal({ button: b.value, values: values });
+      });
+      bar.appendChild(btn);
+    });
+    modalState = { after: opts.after, inputs: inputs, returnFocus: document.activeElement };
+    $('modal').hidden = false;
+    const first = body.querySelector('input,textarea') || bar.querySelector('.primary');
+    if (first) { first.focus(); if (first.select && opts.selectFirst !== false && first.type !== 'checkbox') first.select(); }
+  }
+
+  $('modal').addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') { e.stopPropagation(); closeModal({ button: 'cancel', values: {} }); }
+    if (e.key === 'Enter' && e.target.tagName === 'INPUT' && e.target.type === 'text') {
+      const primary = $('modal-buttons').querySelector('.primary');
+      if (primary) { e.preventDefault(); primary.click(); }
+    }
+  });
+  $('modal').addEventListener('pointerdown', function (e) {
+    if (e.target === $('modal')) closeModal({ button: 'cancel', values: {} });
+  });
+
+  /* De standaard browserdialogen werken hier niet, dus Blockly krijgt de onze. */
+  Blockly.dialog.setPrompt(function (message, defaultValue, callback) {
+    openModal({
+      title: message, fields: [{ id: 'v', type: 'text', value: defaultValue || '' }],
+      buttons: [{ label: 'Annuleer', value: 'cancel' }, { label: 'OK', primary: true, value: 'ok' }],
+      after: function (r) { callback(r && r.button === 'ok' ? r.values.v : null); }
+    });
+  });
+  Blockly.dialog.setConfirm(function (message, callback) {
+    openModal({
+      title: 'Zeker weten?', message: message,
+      buttons: [{ label: 'Annuleer', value: 'cancel' }, { label: 'OK', primary: true, value: 'ok' }],
+      after: function (r) { callback(!!(r && r.button === 'ok')); }
+    });
+  });
+  Blockly.dialog.setAlert(function (message, callback) {
+    openModal({ title: 'Let op', message: message, after: function () { if (callback) callback(); } });
+  });
+
+  /* ---------- Mijn blokken ---------- */
+  function cleanName(text) {
+    return String(text || '').replace(/\s+/g, ' ').trim();
+  }
+
+  function makeProcedure() {
+    openModal({
+      title: 'Maak een blok',
+      message: 'Geef je blok een naam. Daarna sleep je er blokken onder en gebruik je het overal in je programma.',
+      fields: [
+        { id: 'name', type: 'text', label: 'Naam', placeholder: 'bijvoorbeeld: spring' },
+        { id: 'params', type: 'text', label: 'Invoer (optioneel)', placeholder: 'bijvoorbeeld: hoogte, snelheid',
+          hint: 'Zet komma\'s tussen de namen. Je gebruikt ze in je blok als variabelen.' },
+        { id: 'ret', type: 'checkbox', label: 'Dit blok geeft een waarde terug', value: false }
+      ],
+      buttons: [{ label: 'Annuleer', value: 'cancel' }, { label: 'Maak blok', primary: true, value: 'ok' }],
+      after: function (r) {
+        if (!r || r.button !== 'ok') return;
+        const name = cleanName(r.values.name);
+        if (!name) { toast('Geef het blok eerst een naam.'); return; }
+        const params = r.values.params.split(',').map(cleanName).filter(Boolean).map(function (p) {
+          return { name: p, id: Blockly.utils.idGenerator.genUid() };
+        });
+        const metrics = workspace.getMetrics();
+        const scale = workspace.scale || 1;
+        const x = (metrics.viewLeft + 40) / scale;
+        const y = (metrics.viewTop + 40) / scale;
+        const block = Blockly.serialization.blocks.append({
+          type: r.values.ret ? 'procedures_defreturn' : 'procedures_defnoreturn',
+          fields: { NAME: name }, extraState: { params: params }, x: x, y: y
+        }, workspace);
+        if (block && block.select) block.select();
+        toast('Je blok staat in de werkruimte. Sleep er blokken onder.');
+      }
+    });
+  }
+  workspace.registerButtonCallback('makeProc', makeProcedure);
+  workspace.registerToolboxCategoryCallback('MIJN_BLOKKEN', function (ws) {
+    const items = [{ kind: 'button', text: 'Maak een blok', callbackkey: 'makeProc' }];
+    const all = Blockly.Procedures.allProcedures(ws);
+    all[0].concat(all[1]).forEach(function (p) {
+      const inputs = {};
+      p[1].forEach(function (_, i) { inputs['ARG' + i] = { shadow: { type: 'math_number', fields: { NUM: 0 } } }; });
+      items.push({
+        kind: 'block', type: p[2] ? 'procedures_callreturn' : 'procedures_callnoreturn',
+        extraState: { name: p[0], params: p[1] }, inputs: inputs
+      });
+    });
+    if (items.length === 1) items.push({ kind: 'label', text: 'Nog geen eigen blokken.' });
+    return items;
+  });
+
+  /* ---------- project laden en bewaren ---------- */
+  let pristine = false;
+  let changedSinceLoad = false;
+
+  function ensureDefaultVariables() {
+    kit.DEFAULT_VARIABLES.forEach(function (name) {
+      if (!workspace.getVariable(name)) workspace.createVariable(name);
+    });
+  }
+
+  /* Na het laden komen er nog even gebeurtenissen binnen. Die tellen niet als wijziging. */
+  let quietUntil = 0;
+
+  function finishRenders() {
+    const rm = Blockly.renderManagement;
+    return rm && rm.finishQueuedRenders ? rm.finishQueuedRenders() : Promise.resolve();
+  }
+
+  /* Zet losse stapels van een voorbeeld netjes in kolommen naast elkaar. */
+  function arrange() {
+    const top = workspace.getTopBlocks(true);
+    const LIMIT = 520;
+    let x = 30;
+    let y = 30;
+    let colW = 0;
+    Blockly.Events.disable();
+    try {
+      top.forEach(function (block) {
+        const size = block.getHeightWidth();
+        if (y > 30 && y + size.height > LIMIT) { x += colW + 60; y = 30; colW = 0; }
+        block.moveTo(new Blockly.utils.Coordinate(x, y));
+        y += size.height + 36;
+        colW = Math.max(colW, size.width);
+      });
+    } finally {
+      Blockly.Events.enable();
+    }
+  }
+
+  /* Begin linksboven bij het eerste blok. */
+  function showStart() {
+    const box = workspace.getBlocksBoundingBox();
+    const s = workspace.scale || 1;
+    workspace.scroll(24 - box.left * s, 24 - box.top * s);
+  }
+
+  function loadState(state, isExample, after) {
+    Blockly.Events.disable();
+    try {
+      workspace.clear();
+      Blockly.serialization.workspaces.load(JSON.parse(JSON.stringify(state)), workspace);
+      ensureDefaultVariables();
+    } finally {
+      Blockly.Events.enable();
+    }
+    quietUntil = Date.now() + 1200;
+    pristine = !!isExample;
+    changedSinceLoad = false;
+    workspace.clearUndo();
+    return finishRenders().then(function () {
+      if (isExample) arrange();
+      showStart();
+      changedSinceLoad = false;
+      quietUntil = Date.now() + 600;
+      refreshCode();
+      saveProject();
+      if (after) after();
+    });
+  }
+
+  function saveProject() {
+    try { writeStore(JSON.stringify(Blockly.serialization.workspaces.save(workspace))); } catch (e) { /* negeren */ }
+  }
+
+  /* ---------- code genereren ---------- */
+  let currentCode = '';
+  function refreshCode() {
+    try {
+      currentCode = kit.generateProgram(workspace);
+    } catch (e) {
+      currentCode = '// De code kon niet worden gemaakt: ' + (e && e.message ? e.message : e) + '\n';
+    }
+    $('code').innerHTML = highlight(currentCode);
+  }
+
+  function esc(t) { return t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+  function highlight(code) {
+    const re = /(\/\/[^\n]*)|('(?:[^'\\\n]|\\.)*'|"(?:[^"\\\n]|\\.)*")|\b(function|var|const|let|for|of|if|else|return|continue|break|while|null|true|false|new)\b|\b(\d+(?:\.\d+)?)\b|\b(onStart|onFrame|onClick|onKey)\b/g;
+    let out = '';
+    let last = 0;
+    let m;
+    while ((m = re.exec(code))) {
+      out += esc(code.slice(last, m.index));
+      const cls = m[1] ? 'tc' : m[2] ? 'ts' : m[3] ? 'tk' : m[4] ? 'tn' : 'te';
+      out += '<span class="' + cls + '">' + esc(m[0]) + '</span>';
+      last = m.index + m[0].length;
+    }
+    return out + esc(code.slice(last));
+  }
+
+  /* ---------- starten en stoppen ---------- */
+  let loaded = false;
+  let lastError = null;
+
+  function showError(message) {
+    lastError = message;
+    const el = $('error');
+    el.textContent = 'Er ging iets mis in de simulatie: ' + message + '. Pas je blokken aan en druk op Opnieuw.';
+    el.hidden = false;
+    syncControls();
+  }
+  function clearError() {
+    lastError = null;
+    $('error').hidden = true;
+  }
+
+  function reload(andPlay) {
+    clearError();
+    refreshCode();
+    sim.pause();
+    sim.load(currentCode);
+    loaded = true;
+    changedSinceLoad = false;
+    logShown = -1;
+    if (andPlay && !lastError) sim.play();
+    syncControls();
+    renderLog(true);
+  }
+
+  function togglePlay() {
+    if (!loaded || lastError) { reload(true); return; }
+    if (sim.isRunning()) sim.pause(); else sim.play();
+    syncControls();
+  }
+
+  function stepOnce() {
+    if (!loaded || lastError) reload(false);
+    sim.pause();
+    sim.step();
+    sim.render();
+    syncControls();
+  }
+
+  function syncControls() {
+    const running = sim.isRunning();
+    const btn = $('btn-play');
+    btn.dataset.state = running ? 'running' : 'paused';
+    $('btn-play-label').textContent = running ? 'Pauze' : 'Start';
+    const chip = $('chip-state');
+    if (lastError) { chip.textContent = 'Fout'; chip.dataset.tone = 'bad'; }
+    else if (running) { chip.textContent = 'Bezig'; chip.dataset.tone = 'good'; }
+    else { chip.textContent = loaded ? 'Gepauzeerd' : 'Klaar'; chip.dataset.tone = 'idle'; }
+    $('chip-changed').hidden = !changedSinceLoad;
+  }
+
+  $('btn-play').addEventListener('click', togglePlay);
+  $('btn-step').addEventListener('click', stepOnce);
+  $('btn-reset').addEventListener('click', function () { reload(true); });
+  $('speed').addEventListener('change', function () { sim.setSpeed(Number($('speed').value)); });
+
+  /* ---------- tabbladen ---------- */
+  const tabs = Array.prototype.slice.call(document.querySelectorAll('[role="tab"]'));
+  function selectTab(tab) {
+    tabs.forEach(function (t) {
+      const on = t === tab;
+      t.setAttribute('aria-selected', on ? 'true' : 'false');
+      t.tabIndex = on ? 0 : -1;
+      $(t.getAttribute('aria-controls')).hidden = !on;
+    });
+    if (tab.id === 'tab-graph') sim.render();
+  }
+  tabs.forEach(function (t, i) {
+    t.addEventListener('click', function () { selectTab(t); });
+    t.addEventListener('keydown', function (e) {
+      let j = -1;
+      if (e.key === 'ArrowRight') j = (i + 1) % tabs.length;
+      if (e.key === 'ArrowLeft') j = (i + tabs.length - 1) % tabs.length;
+      if (j >= 0) { e.preventDefault(); selectTab(tabs[j]); tabs[j].focus(); }
+    });
+  });
+
+  /* ---------- logboek en statusregel ---------- */
+  let logShown = -1;
+  function renderLog(force) {
+    const info = sim.info();
+    if (!force && info.logCount === logShown) return;
+    logShown = info.logCount;
+    const box = $('log');
+    box.textContent = '';
+    if (!info.log.length) {
+      const p = document.createElement('p');
+      p.className = 'empty';
+      p.textContent = 'Nog niets in het logboek. Gebruik het blok "schrijf ... in het logboek" onder Uitvoer.';
+      box.appendChild(p);
+      return;
+    }
+    info.log.slice(-80).forEach(function (l) {
+      const row = document.createElement('div');
+      row.className = 'log-row';
+      const f = document.createElement('span');
+      f.className = 'log-frame';
+      f.textContent = 'stap ' + l.frame;
+      const t = document.createElement('span');
+      t.textContent = l.text;
+      row.appendChild(f);
+      row.appendChild(t);
+      box.appendChild(row);
+    });
+    box.scrollTop = box.scrollHeight;
+  }
+
+  function pollStatus() {
+    const info = sim.info();
+    $('stat-step').textContent = String(info.frame);
+    $('stat-total').textContent = String(info.total);
+    renderLog(false);
+    if (info.running !== (($('btn-play').dataset.state) === 'running')) syncControls();
+  }
+  setInterval(pollStatus, 200);
+
+  /* ---------- kopiëren ---------- */
+  function copyText(text, doneMessage) {
+    const fallback = function () {
+      openModal({
+        title: 'Kopieer met Ctrl+C', message: 'Je browser liet het kopiëren niet toe. De tekst is hieronder geselecteerd.',
+        fields: [{ id: 't', type: 'textarea', value: text, rows: 10, readonly: true }],
+        buttons: [{ label: 'Sluit', primary: true, value: 'ok' }]
+      });
+    };
+    try {
+      navigator.clipboard.writeText(text).then(function () { toast(doneMessage); }, fallback);
+    } catch (e) { fallback(); }
+  }
+
+  $('btn-copy-js').addEventListener('click', function () {
+    refreshCode();
+    copyText(currentCode, 'JavaScript gekopieerd');
+  });
+
+  function standalonePage(code) {
+    const runtime = createSimulation.toString();
+    const literal = JSON.stringify(code).replace(/</g, '\\u003c');
+    return '<!doctype html>\n<html lang="nl">\n<meta charset="utf-8">\n' +
+      '<meta name="viewport" content="width=device-width, initial-scale=1">\n<title>Mijn simulatie</title>\n' +
+      '<style>html,body{height:100%;margin:0;background:#101624}body{display:grid;place-items:center}' +
+      'canvas{max-width:100vw;max-height:100vh;aspect-ratio:4/3;width:min(100vw,calc(100vh * 4 / 3));outline:none}</style>\n' +
+      '<canvas id="stage" width="960" height="720" tabindex="0"></canvas>\n<script>\n' +
+      runtime + '\n\nconst sim = createSimulation({ canvas: document.getElementById("stage") });\n' +
+      'const program = ' + literal + ';\nsim.load(program);\nsim.play();\n<\/script>\n</html>\n';
+  }
+  $('btn-copy-page').addEventListener('click', function () {
+    refreshCode();
+    copyText(standalonePage(currentCode), 'Losse pagina gekopieerd. Plak hem in een .html-bestand.');
+  });
+
+  /* ---------- project delen ---------- */
+  $('btn-project').addEventListener('click', function () {
+    const json = JSON.stringify(Blockly.serialization.workspaces.save(workspace));
+    openModal({
+      title: 'Project',
+      message: 'Kopieer deze tekst om je blokken te bewaren of te delen. Plak tekst van een ander project in het vak en kies Laad.',
+      fields: [{ id: 'json', type: 'textarea', value: json, rows: 9 }],
+      buttons: [
+        { label: 'Kopieer', value: 'copy', keepOpen: true, onClick: function (values) { copyText(values.json, 'Project gekopieerd'); } },
+        { label: 'Laad', value: 'load' },
+        { label: 'Sluit', primary: true, value: 'cancel' }
+      ],
+      selectFirst: false,
+      after: function (r) {
+        if (!r || r.button !== 'load') return;
+        try {
+          const state = JSON.parse(r.values.json);
+          if (!state.blocks) throw new Error('geen blokken gevonden');
+          loadState(state, false, function () { reload(false); toast('Project geladen'); });
+        } catch (e) {
+          openModal({ title: 'Dat werkt niet', message: 'Deze tekst is geen project van Simblokken: ' + e.message + '.' });
+        }
+      }
+    });
+  });
+
+  /* ---------- voorbeelden ---------- */
+  const select = $('examples');
+  SIM_EXAMPLES.forEach(function (ex, i) {
+    const o = document.createElement('option');
+    o.value = String(i);
+    o.textContent = ex.title;
+    select.appendChild(o);
+  });
+  const hint = $('example-hint');
+
+  function loadExample(i) {
+    const ex = SIM_EXAMPLES[i];
+    hint.textContent = ex.summary;
+    return loadState(ex.state, true, function () { reload(true); });
+  }
+
+  select.addEventListener('change', function () {
+    const i = Number(select.value);
+    const hasWork = workspace.getTopBlocks(false).length > 0 && !pristine && changedSinceLoad;
+    const previous = select.dataset.current || '0';
+    if (!hasWork) { select.dataset.current = String(i); loadExample(i); return; }
+    openModal({
+      title: 'Voorbeeld laden?', message: 'Je huidige blokken worden vervangen. Kopieer ze eerst via Project als je ze wilt houden.',
+      buttons: [{ label: 'Annuleer', value: 'cancel' }, { label: 'Laad voorbeeld', primary: true, value: 'ok' }],
+      after: function (r) {
+        if (r && r.button === 'ok') { select.dataset.current = String(i); loadExample(i); }
+        else select.value = previous;
+      }
+    });
+  });
+
+  /* ---------- werkruimteknoppen ---------- */
+  $('ws-zoom-in').addEventListener('click', function () { workspace.zoomCenter(1); });
+  $('ws-zoom-out').addEventListener('click', function () { workspace.zoomCenter(-1); });
+  $('ws-center').addEventListener('click', showStart);
+  $('ws-undo').addEventListener('click', function () { workspace.undo(false); });
+  $('ws-redo').addEventListener('click', function () { workspace.undo(true); });
+
+  /* ---------- wijzigingen volgen ---------- */
+  let codeTimer = 0;
+  workspace.addChangeListener(function (e) {
+    if (e.isUiEvent || Date.now() < quietUntil) return;
+    changedSinceLoad = true;
+    pristine = false;
+    clearTimeout(codeTimer);
+    codeTimer = setTimeout(function () {
+      refreshCode();
+      saveProject();
+      syncControls();
+    }, 250);
+  });
+
+  /* Het speelveld krijgt toetsen na een klik. */
+  $('stage').addEventListener('focus', function () { $('stage-wrap').classList.add('focused'); });
+  $('stage').addEventListener('blur', function () { $('stage-wrap').classList.remove('focused'); });
+
+  /* ---------- starten ---------- */
+  ensureDefaultVariables();
+  const saved = readStore();
+  let started = false;
+  if (saved) {
+    try {
+      const state = JSON.parse(saved);
+      if (state && state.blocks && state.blocks.blocks && state.blocks.blocks.length) {
+        hint.textContent = 'Je laatste project is teruggezet. Kies een voorbeeld om opnieuw te beginnen.';
+        select.value = '';
+        started = true;
+        loadState(state, false, function () { reload(false); });
+      }
+    } catch (e) { /* kapotte opslag, we beginnen opnieuw */ }
+  }
+  if (!started) { select.value = '0'; select.dataset.current = '0'; loadExample(0); }
+  select.dataset.current = select.dataset.current || '0';
+  syncControls();
+  pollStatus();
+
+  /* Hulp voor testen. */
+  window.__simblokken = { workspace: workspace, sim: sim, kit: kit, reload: reload, loadExample: loadExample };
+})();
+
+</script>
+
+</body></html>
